@@ -30,6 +30,7 @@ nav a:hover { color:#ffe4d6; }
 footer { background:#333; color:white; padding:20px 40px; text-align:center; }
 footer a { color:#ff6b3c; text-decoration:none; }
 .cart-count { background:white; color:#ff6b3c; border-radius:50%; padding:2px 7px; font-size:12px; vertical-align:top; margin-left:5px; }
+.currency { font-size:14px; color:#666; margin-left:2px; }
 </style>
 </head>
 <body>
@@ -93,12 +94,14 @@ if(user){
     userLinks.appendChild(signup);
 }
 
-// Products with local images
+// Products with BDT prices
 let products = [
-    {name:"Chef Knife", price:50, img:"chefknife.png"},
-    {name:"Non-stick Pan", price:40, img:"nonstick.png"},
-    {name:"Measuring Cups", price:15, img:"mug.png"},
-    {name:"Mixing Bowls", price:30, img:"bowl.png"}
+    {name:"Chef Knife", price:4200, img:"chefknife.png"},
+    {name:"Non-stick Pan", price:3500, img:"nonstick.png"},
+    {name:"Measuring Cups", price:1200, img:"mug.png"},
+    {name:"Mixing Bowls", price:2500, img:"bowl.png"},
+    {name:"Wooden Spoon", price:450, img:"woodenspoon.png"},
+    {name:"Cutting Board", price:1800, img:"cuttingboard.png"}
 ];
 
 const grid = document.getElementById("product-grid");
@@ -112,7 +115,7 @@ function displayProducts(){
             <img src="${prod.img}" alt="${prod.name}">
             <div class="card-body">
                 <h3>${prod.name}</h3>
-                <p>$${prod.price}</p>
+                <p>৳${prod.price.toLocaleString('en-BD')} <span class="currency">BDT</span></p>
                 <button onclick="addToCart('${prod.name}',${prod.price},'${prod.img}')">Add to Cart</button>
             </div>
         `;
