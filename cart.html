@@ -113,7 +113,7 @@ button:hover { background:#e55a2c; }
                 </div>
 
                 <h3 style="margin-top:20px;">💳 Payment Method</h3>
-                <div class="payment-option" onclick="selectPayment('cod')">
+                <div class="payment-option selected" onclick="selectPayment('cod')">
                     <input type="radio" name="payment" value="cod" checked> 
                     <span>💰 Cash on Delivery (Pay when you receive order)</span>
                 </div>
@@ -161,7 +161,7 @@ button:hover { background:#e55a2c; }
                 <p>Thank you for your purchase!</p>
                 <p><strong>Order ID: #<span id="orderId"></span></strong></p>
                 <p>You will receive a confirmation email shortly.</p>
-                <button class="checkout-btn" onclick="closeCheckout()" style="background:#28a745;">Continue Shopping</button>
+                <button class="checkout-btn" onclick="closeAndRedirect()" style="background:#28a745;">Continue Shopping</button>
             </div>
         </div>
     </div>
@@ -270,27 +270,16 @@ function removeItem(index) {
     }
 }
 
-// Checkout functions
+// Checkout functions - NO LOGIN REQUIRED!
 function openCheckout() {
     const cart = JSON.parse(localStorage.getItem("cart")) || [];
     if (cart.length === 0) {
-        alert("Your cart is empty!");
+        alert("Your cart is empty! Add some products first.");
         return;
     }
 
-    // Check if user is logged in
-    const user = JSON.parse(localStorage.getItem("loggedInUser"));
-    if (!user) {
-        if (confirm('Please login to checkout. Go to login page?')) {
-            window.location.href = 'login.html';
-        }
-        return;
-    }
-
-    // Auto-fill user info
-    document.getElementById('fullName').value = user.name || '';
-    document.getElementById('email').value = user.email || '';
-
+    // NO LOGIN CHECK - Directly open checkout!
+    
     // Load order summary in modal
     loadCheckoutSummary();
     
@@ -303,6 +292,11 @@ function closeCheckout() {
     // Reset form
     document.getElementById('successMessage').style.display = 'none';
     document.getElementById('checkoutForm').style.display = 'block';
+}
+
+function closeAndRedirect() {
+    closeCheckout();
+    window.location.href = 'index.html';
 }
 
 function selectPayment(method) {
