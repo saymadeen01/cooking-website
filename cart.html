@@ -48,10 +48,20 @@ button:hover { background:#e55a2c; }
 .payment-option:hover { border-color:#ff6b3c; }
 .payment-option.selected { border-color:#ff6b3c; background:#fff9f7; }
 .payment-option input { margin-right:10px; }
+.payment-icon { font-size:20px; margin-right:10px; }
 .order-summary-item { display:flex; justify-content:space-between; margin:5px 0; }
 .order-total { border-top:2px solid #ff6b3c; padding-top:10px; margin-top:10px; font-weight:bold; font-size:18px; color:#ff6b3c; }
 .success-message { text-align:center; padding:30px; display:none; }
 .success-message h3 { color:#ff6b3c; margin-bottom:15px; }
+.bkash-color { color:#e2136e; }
+.card-color { color:#0066cc; }
+.cod-color { color:#28a745; }
+
+/* bKash Details Styles */
+.bkash-details { display:none; margin-top:15px; padding:15px; background:#f8f9fa; border-radius:5px; border-left:4px solid #e2136e; }
+.bkash-steps { margin:10px 0; padding-left:20px; }
+.bkash-steps li { margin-bottom:8px; }
+.bkash-number { background:#e2136e; color:white; padding:2px 8px; border-radius:4px; font-weight:bold; margin-right:10px; }
 </style>
 </head>
 <body>
@@ -113,21 +123,62 @@ button:hover { background:#e55a2c; }
                 </div>
 
                 <h3 style="margin-top:20px;">💳 Payment Method</h3>
+                
+                <!-- Cash on Delivery -->
                 <div class="payment-option selected" onclick="selectPayment('cod')">
                     <input type="radio" name="payment" value="cod" checked> 
-                    <span>💰 Cash on Delivery (Pay when you receive order)</span>
-                </div>
-                <div class="payment-option" onclick="selectPayment('card')">
-                    <input type="radio" name="payment" value="card"> 
-                    <span>💳 Credit/Debit Card</span>
-                </div>
-                <div class="payment-option" onclick="selectPayment('paypal')">
-                    <input type="radio" name="payment" value="paypal"> 
-                    <span>🔵 PayPal</span>
+                    <span class="payment-icon cod-color">💰</span>
+                    <div>
+                        <strong>Cash on Delivery</strong>
+                        <p style="color:#666; margin:0; font-size:14px;">Pay when you receive your order</p>
+                    </div>
                 </div>
 
-                <!-- Card Details (Hidden by default) -->
-                <div id="cardDetails" style="display:none; margin-top:15px; padding:15px; background:#f8f9fa; border-radius:5px;">
+                <!-- bKash -->
+                <div class="payment-option" onclick="selectPayment('bkash')">
+                    <input type="radio" name="payment" value="bkash"> 
+                    <span class="payment-icon bkash-color">📱</span>
+                    <div>
+                        <strong class="bkash-color">bKash</strong>
+                        <p style="color:#666; margin:0; font-size:14px;">Pay via bKash mobile banking</p>
+                    </div>
+                </div>
+
+                <!-- Credit Card -->
+                <div class="payment-option" onclick="selectPayment('card')">
+                    <input type="radio" name="payment" value="card"> 
+                    <span class="payment-icon card-color">💳</span>
+                    <div>
+                        <strong>Credit/Debit Card</strong>
+                        <p style="color:#666; margin:0; font-size:14px;">Visa, MasterCard, American Express</p>
+                    </div>
+                </div>
+
+                <!-- bKash Payment Instructions -->
+                <div id="bkashDetails" class="bkash-details">
+                    <h4 class="bkash-color">📱 How to pay with bKash:</h4>
+                    <ol class="bkash-steps">
+                        <li><span class="bkash-number">1</span> Go to your bKash mobile menu</li>
+                        <li><span class="bkash-number">2</span> Select "Send Money"</li>
+                        <li><span class="bkash-number">3</span> Enter our bKash number: <strong>017XX-XXXXXX</strong></li>
+                        <li><span class="bkash-number">4</span> Enter amount: <strong id="bkashAmount">$0</strong></li>
+                        <li><span class="bkash-number">5</span> Enter reference: <strong id="orderReference">ORDER123</strong></li>
+                        <li><span class="bkash-number">6</span> Enter your bKash PIN to confirm</li>
+                    </ol>
+                    <div class="form-group">
+                        <label>📞 bKash Transaction ID *</label>
+                        <input type="text" id="bkashTransactionId" placeholder="Enter your bKash transaction ID">
+                        <small style="color:#666;">You'll get this after successful payment</small>
+                    </div>
+                    <div class="form-group">
+                        <label>📱 Your bKash Number *</label>
+                        <input type="text" id="bkashSenderNumber" placeholder="Enter your bKash number">
+                    </div>
+                </div>
+
+                <!-- Card Details -->
+                <div id="cardDetails" style="display:none; margin-top:15px; padding:15px; background:#f8f9fa; border-radius:5px; border-left:4px solid #0066cc;">
+                    <h4 class="card-color">💳 Card Details</h4>
                     <div class="form-group">
                         <label>Card Number</label>
                         <input type="text" placeholder="1234 5678 9012 3456">
@@ -270,7 +321,7 @@ function removeItem(index) {
     }
 }
 
-// Checkout functions - NO LOGIN REQUIRED!
+// Checkout functions
 function openCheckout() {
     const cart = JSON.parse(localStorage.getItem("cart")) || [];
     if (cart.length === 0) {
@@ -278,8 +329,6 @@ function openCheckout() {
         return;
     }
 
-    // NO LOGIN CHECK - Directly open checkout!
-    
     // Load order summary in modal
     loadCheckoutSummary();
     
@@ -306,9 +355,27 @@ function selectPayment(method) {
     });
     event.currentTarget.classList.add('selected');
     
-    // Show/hide card details
-    const cardDetails = document.getElementById('cardDetails');
-    cardDetails.style.display = method === 'card' ? 'block' : 'none';
+    // Show/hide payment details
+    document.getElementById('bkashDetails').style.display = method === 'bkash' ? 'block' : 'none';
+    document.getElementById('cardDetails').style.display = method === 'card' ? 'block' : 'none';
+    
+    // Update bKash amount and reference
+    if (method === 'bkash') {
+        const total = calculateTotal();
+        document.getElementById('bkashAmount').textContent = '$' + total.toFixed(2);
+        document.getElementById('orderReference').textContent = 'ORDER' + Date.now().toString().slice(-6);
+    }
+}
+
+function calculateTotal() {
+    const cart = JSON.parse(localStorage.getItem("cart")) || [];
+    let subtotal = 0;
+    cart.forEach(item => {
+        subtotal += item.price * item.qty;
+    });
+    const shipping = 5.99;
+    const tax = subtotal * 0.08;
+    return subtotal + shipping + tax;
 }
 
 function loadCheckoutSummary() {
@@ -323,7 +390,7 @@ function loadCheckoutSummary() {
         summaryHTML += `
             <div class="order-summary-item">
                 <span>${item.name} (Qty: ${item.qty})</span>
-                <span>$${itemTotal}</span>
+                <span>$${itemTotal.toFixed(2)}</span>
             </div>
         `;
     });
@@ -360,15 +427,34 @@ function placeOrder() {
     const cart = JSON.parse(localStorage.getItem("cart")) || [];
     const paymentMethod = document.querySelector('input[name="payment"]:checked').value;
     
+    // Additional validation for bKash
+    if (paymentMethod === 'bkash') {
+        const transactionId = document.getElementById('bkashTransactionId').value;
+        const senderNumber = document.getElementById('bkashSenderNumber').value;
+        if (!transactionId || !senderNumber) {
+            alert('Please provide bKash transaction ID and your bKash number.');
+            return;
+        }
+    }
+    
     // Create order
     const order = {
-        id: 'ORD' + Date.now(),
+        id: 'ORD' + Date.now().toString().slice(-6),
         items: cart,
         shipping: { fullName, email, phone, address, city, zipCode },
         paymentMethod: paymentMethod,
         date: new Date().toLocaleString(),
         status: 'confirmed'
     };
+
+    // Add bKash details if payment method is bKash
+    if (paymentMethod === 'bkash') {
+        order.bkashDetails = {
+            transactionId: document.getElementById('bkashTransactionId').value,
+            senderNumber: document.getElementById('bkashSenderNumber').value,
+            amount: calculateTotal()
+        };
+    }
 
     // Save order
     const orders = JSON.parse(localStorage.getItem("orders")) || [];
