@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cart - Cooking Essentials</title>
+<style>
+body { font-family: 'Segoe UI', sans-serif; margin:0; padding:0; background:#f9f9f9; }
+header { background:#ff6b3c; color:white; padding:20px 40px; display:flex; justify-content:space-between; align-items:center; }
+header h1 { font-size:28px; }
+nav a { color:white; text-decoration:none; margin-left:20px; font-weight:bold; transition: color 0.3s; }
+nav a:hover { color:#ffe4d6; }
+.container { max-width:900px; margin:40px auto; background:white; border-radius:10px; padding:30px; box-shadow:0 4px 12px rgba(0,0,0,0.1); }
+h1 { color:#ff6b3c; margin-bottom:30px; text-align:center; }
+table { width:100%; border-collapse:collapse; margin-bottom:20px; }
+th, td { padding:15px; text-align:left; border-bottom:1px solid #ddd; vertical-align:middle; }
+th { background:#ffe4d6; color:#ff6b3c; }
+td img { width:80px; height:80px; object-fit:cover; border-radius:5px; }
+button { background:#ff6b3c; color:white; border:none; padding:5px 10px; border-radius:5px; cursor:pointer; transition:0.3s; margin:0 3px; }
+button:hover { background:#e55a2c; }
+.total { text-align:right; font-size:20px; font-weight:bold; margin-top:20px; }
+.checkout-btn { display:block; width:100%; padding:12px 0; text-align:center; font-size:18px; font-weight:bold; margin-top:20px; text-decoration:none; color:white; background:#ff6b3c; border-radius:8px; transition:0.3s; }
+.checkout-btn:hover { background:#e55a2c; }
+.qty { display:flex; align-items:center; justify-content:center; }
+.qty span { margin:0 10px; font-weight:bold; font-size:16px; }
+@media(max-width:600px){
+    td img { width:60px; height:60px; }
+    th, td { padding:10px; font-size:14px; }
+    .checkout-btn { font-size:16px; }
+}
+</style>
+</head>
+<body>
+
+<header>
+    <h1>Cooking Essentials</h1>
+    <nav>
+        <a href="index.html">Home</a>
+        <a href="cart.html">Cart</a>
+        <a href="login.html">Login</a>
+        <a href="signup.html">Signup</a>
+    </nav>
+</header>
+
+<div class="container">
+    <h1>Your Cart</h1>
+    <table id="cart-table">
+        <thead>
+            <tr>
+                <th>Product</th>
+                <th>Image</th>
+                <th>Price</th>
+                <th>Quantity</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Cart items will appear here -->
+        </tbody>
+    </table>
+    <p class="total" id="total-price">Total: $0</p>
+    <a href="#" class="checkout-btn" onclick="checkout()">Checkout</a>
+</div>
+
+<script>
+// Load cart from localStorage
+let cart = JSON.parse(localStorage.getItem("cart")) || [];
+
+// Initialize qty if not set
+cart.forEach(item => { if(!item.qty) item.qty = 1; });
+
+function displayCart(){
+    const tbody = document.querySelector("#cart-table tbody");
+    tbody.innerHTML = "";
+    let total = 0;
+
+    cart.forEach((item,index)=>{
+        total += item.price * item.qty;
+        const row = document.createElement("tr");
+        const img = item.img || "placeholder.png"; // Use local image filename
+        row.innerHTML = `
+            <td>${item.name}</td>
+            <td><img src="${img}" alt="${item.name}"></td>
+            <td>$${item.price}</td>
+            <td class="qty">
+                <button onclick="decreaseQty(${index})">-</button>
+                <span>${item.qty}</span>
+                <button onclick="increaseQty(${index})">+</button>
+            </td>
+            <td><button onclick="removeItem(${index})">Remove</button></td>
+        `;
+        tbody.appendChild(row);
+    });
+
+    document.getElementById("total-price").textContent = "Total: $" + total;
+    localStorage.setItem("cart", JSON.stringify(cart));
+}
+
+function increaseQty(index){
+    cart[index].qty++;
+    displayCart();
+}
+
+function decreaseQty(index){
+    if(cart[index].qty > 1){
+        cart[index].qty--;
+    } else {
+        removeItem(index);
+        return;
+    }
+    displayCart();
+}
+
+function removeItem(index){
+    cart.splice(index,1);
+    displayCart();
+}
+
+function checkout(){
+    if(cart.length === 0){ alert("Your cart is empty!"); return; }
+    const totalAmount = cart.reduce((sum,i)=>sum.price*i.qty,0);
+    alert("Thank you for your purchase! Total: $" + totalAmount);
+    cart = [];
+    displayCart();
+}
+
+displayCart();
+</script>
+
+</body>
+</html>

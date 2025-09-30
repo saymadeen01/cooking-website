@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Panel - Cooking Essentials</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background:#f4f4f4; text-align:center; padding:40px; }
+        .admin-container { background:white; padding:40px; max-width:700px; margin:auto; border-radius:10px; box-shadow:0 4px 10px rgba(0,0,0,0.1); }
+        h1 { color:#ff6b3c; margin-bottom:20px; }
+        input, button { padding:10px; margin:5px 0; border-radius:5px; border:1px solid #ccc; }
+        button { background:#ff6b3c; color:white; border:none; font-weight:bold; cursor:pointer; transition:0.3s; }
+        button:hover { background:#e55a2c; }
+        .hidden { display:none; }
+        table { width:100%; border-collapse: collapse; margin-top:20px; }
+        th, td { padding:12px; border:1px solid #ccc; }
+        th { background:#ff6b3c; color:white; }
+        img { width:80px; }
+    </style>
+</head>
+<body>
+
+<div class="admin-container">
+    <h1>Admin Login</h1>
+    <p>Enter the secret code to access the admin panel:</p>
+    <input type="password" id="admin-code" placeholder="Enter code">
+    <br>
+    <button onclick="checkCode()">Submit</button>
+
+    <div id="admin-panel" class="hidden">
+        <h2>Welcome, Admin!</h2>
+
+        <h3>Add New Product</h3>
+        <input type="text" id="prod-name" placeholder="Product Name"><br>
+        <input type="number" id="prod-price" placeholder="Price"><br>
+        <input type="text" id="prod-img" placeholder="Image URL"><br>
+        <button onclick="addProduct()">Add Product</button>
+
+        <h3>Current Products</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Price</th>
+                    <th>Image</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody id="product-list"></tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    const SECRET_CODE = "atonko"; // Change this code
+    const adminPanel = document.getElementById("admin-panel");
+    const productListEl = document.getElementById("product-list");
+
+    // Load products from localStorage or initialize default products
+    let products = JSON.parse(localStorage.getItem("products")) || [
+        {name:"Chef Knife", price:50, img:"https://images.unsplash.com/photo-1600891964599-f61ba0e24092?auto=format&fit=crop&w=400&q=80"},
+        {name:"Non-stick Pan", price:40, img:"https://images.unsplash.com/photo-1617196036598-6e0c8b85f92d?auto=format&fit=crop&w=400&q=80"},
+        {name:"Measuring Cups", price:15, img:"https://images.unsplash.com/photo-1603077450975-b47e327c3f91?auto=format&fit=crop&w=400&q=80"},
+        {name:"Mixing Bowls", price:30, img:"https://images.unsplash.com/photo-1606312612629-c59f2dbad5a6?auto=format&fit=crop&w=400&q=80"}
+    ];
+
+    function checkCode() {
+        const code = document.getElementById("admin-code").value;
+        if(code === SECRET_CODE){
+            adminPanel.classList.remove("hidden");
+            displayProducts();
+        } else {
+            alert("Incorrect code!");
+            adminPanel.classList.add("hidden");
+        }
+    }
+
+    function displayProducts() {
+        productListEl.innerHTML = "";
+        products.forEach((prod, index) => {
+            const row = document.createElement("tr");
+            row.innerHTML = `
+                <td>${prod.name}</td>
+                <td>$${prod.price}</td>
+                <td><img src="${prod.img}" alt="${prod.name}"></td>
+                <td><button onclick="deleteProduct(${index})">Delete</button></td>
+            `;
+            productListEl.appendChild(row);
+        });
+        localStorage.setItem("products", JSON.stringify(products));
+    }
+
+    function addProduct() {
+        const name = document.getElementById("prod-name").value.trim();
+        const price = parseFloat(document.getElementById("prod-price").value);
+        const img = document.getElementById("prod-img").value.trim();
+        if(!name || !price || !img){ alert("Please fill all fields."); return; }
+        products.push({name, price, img});
+        displayProducts();
+        document.getElementById("prod-name").value="";
+        document.getElementById("prod-price").value="";
+        document.getElementById("prod-img").value="";
+        alert("Product added successfully!");
+    }
+
+    function deleteProduct(index) {
+        if(confirm("Are you sure you want to delete this product?")){
+            products.splice(index,1);
+            displayProducts();
+        }
+    }
+</script>
+
+</body>
+</html>

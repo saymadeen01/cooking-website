@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cooking Essentials</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; font-family:'Segoe UI',sans-serif; }
+body { background:#f9f9f9; color:#333; }
+header { background:#ff6b3c; color:white; padding:15px 40px; display:flex; justify-content:space-between; align-items:center; position:sticky; top:0; z-index:1000; }
+header h1 { font-size:26px; }
+nav a { color:white; text-decoration:none; margin-left:20px; font-weight:bold; transition:color 0.3s; }
+nav a:hover { color:#ffe4d6; }
+.hero { text-align:center; padding:60px 20px; background:#ffe4d6; }
+.hero h2 { font-size:48px; margin-bottom:15px; color:#ff6b3c; }
+.hero p { font-size:18px; margin-bottom:25px; }
+.btn { background:#ff6b3c; color:white; padding:12px 25px; text-decoration:none; font-weight:bold; border-radius:5px; transition:0.3s; }
+.btn:hover { background:#e55a2c; }
+.products { padding:50px 20px; text-align:center; }
+.products h2 { font-size:36px; margin-bottom:35px; }
+.product-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:25px; }
+.product-card { background:white; border-radius:10px; box-shadow:0 5px 15px rgba(0,0,0,0.1); overflow:hidden; transition:transform 0.3s; position:relative; }
+.product-card:hover { transform:translateY(-5px); }
+.product-card img { width:100%; height:200px; object-fit:cover; }
+.card-body { padding:15px; }
+.card-body h3 { font-size:20px; margin-bottom:10px; }
+.card-body p { color:#555; font-size:15px; margin-bottom:15px; }
+.card-body button { display:inline-block; background-color:#ff6b3c; color:white; padding:8px 18px; border:none; border-radius:5px; cursor:pointer; font-weight:bold; transition:0.3s; }
+.card-body button:hover { background-color:#e55a2c; }
+footer { background:#333; color:white; padding:20px 40px; text-align:center; }
+footer a { color:#ff6b3c; text-decoration:none; }
+.cart-count { background:white; color:#ff6b3c; border-radius:50%; padding:2px 7px; font-size:12px; vertical-align:top; margin-left:5px; }
+</style>
+</head>
+<body>
+
+<header>
+    <h1>Cooking Essentials</h1>
+    <nav id="nav-links">
+        <a href="#products">Products</a>
+        <a href="cart.html">Cart <span class="cart-count" id="cart-count">0</span></a>
+        <span id="user-links"></span>
+    </nav>
+</header>
+
+<section class="hero">
+    <h2>Cook Like a Pro</h2>
+    <p>Discover premium cooking essentials for every kitchen. Stylish, durable tools that make cooking a joy!</p>
+    <a href="#products" class="btn">Shop Now</a>
+</section>
+
+<section class="products" id="products">
+    <h2>Our Top Products</h2>
+    <div class="product-grid" id="product-grid">
+        <!-- Products will be loaded here dynamically -->
+    </div>
+</section>
+
+<footer>
+    &copy; 2025 Cooking Essentials. All rights reserved. | <a href="#">Privacy Policy</a>
+</footer>
+
+<script>
+const userLinks = document.getElementById("user-links");
+
+// Check logged-in user
+const user = JSON.parse(localStorage.getItem("loggedInUser"));
+if(user){
+    const welcome = document.createElement('span');
+    welcome.textContent = `Welcome, ${user.name}`;
+    welcome.style.marginLeft = "15px";
+    userLinks.appendChild(welcome);
+
+    const logoutBtn = document.createElement('button');
+    logoutBtn.textContent = "Logout";
+    logoutBtn.style.marginLeft = "10px";
+    logoutBtn.style.padding = "5px 10px";
+    logoutBtn.style.border = "none";
+    logoutBtn.style.borderRadius = "5px";
+    logoutBtn.style.cursor = "pointer";
+    logoutBtn.onclick = () => { localStorage.removeItem("loggedInUser"); location.reload(); };
+    userLinks.appendChild(logoutBtn);
+}else{
+    const login = document.createElement('a');
+    login.href = "login.html";
+    login.textContent = "Login";
+    login.style.marginLeft = "15px";
+    userLinks.appendChild(login);
+    const signup = document.createElement('a');
+    signup.href = "signup.html";
+    signup.textContent = "Signup";
+    signup.style.marginLeft = "10px";
+    userLinks.appendChild(signup);
+}
+
+// Products with local images
+let products = [
+    {name:"Chef Knife", price:50, img:"chefknife.png"},
+    {name:"Non-stick Pan", price:40, img:"nonstick.png"},
+    {name:"Measuring Cups", price:15, img:"mug.png"},
+    {name:"Mixing Bowls", price:30, img:"bowl.png"}
+];
+
+const grid = document.getElementById("product-grid");
+
+function displayProducts(){
+    grid.innerHTML = "";
+    products.forEach(prod => {
+        const card = document.createElement("div");
+        card.className = "product-card";
+        card.innerHTML = `
+            <img src="${prod.img}" alt="${prod.name}">
+            <div class="card-body">
+                <h3>${prod.name}</h3>
+                <p>$${prod.price}</p>
+                <button onclick="addToCart('${prod.name}',${prod.price},'${prod.img}')">Add to Cart</button>
+            </div>
+        `;
+        grid.appendChild(card);
+    });
+}
+
+function addToCart(name, price, img){
+    let cart = JSON.parse(localStorage.getItem("cart")) || [];
+    cart.push({name, price, img, qty:1});
+    localStorage.setItem("cart", JSON.stringify(cart));
+    updateCartCount();
+    alert(name + " added to cart!");
+}
+
+function updateCartCount(){
+    const cart = JSON.parse(localStorage.getItem("cart")) || [];
+    document.getElementById("cart-count").textContent = cart.length;
+}
+
+displayProducts();
+updateCartCount();
+</script>
+
+</body>
+</html>
