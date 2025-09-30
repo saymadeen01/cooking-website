@@ -57,6 +57,38 @@ footer a { color:#ff6b3c; text-decoration:none; }
     </div>
 </section>
 
+<!-- Temporary Image Test Section -->
+<div style="text-align: center; margin: 20px; padding: 20px; background: #f0f8ff; border-radius: 10px;">
+    <h3>🖼️ Image Test Section</h3>
+    <p>If you see broken images below, check your image file names:</p>
+    <div style="display: flex; flex-wrap: wrap; gap: 15px; justify-content: center; margin-top: 15px;">
+        <div>
+            <img src="wooden spoon.jpg" alt="Wooden Spoon Test" style="width: 80px; height: 80px; border: 2px solid #ff6b3c; object-fit: cover;">
+            <p style="font-size: 12px; margin: 5px 0;">wooden spoon.jpg</p>
+        </div>
+        <div>
+            <img src="chefknife.png" alt="Chef Knife Test" style="width: 80px; height: 80px; border: 2px solid #ff6b3c; object-fit: cover;">
+            <p style="font-size: 12px; margin: 5px 0;">chefknife.png</p>
+        </div>
+        <div>
+            <img src="nonstick.png" alt="Non-stick Pan Test" style="width: 80px; height: 80px; border: 2px solid #ff6b3c; object-fit: cover;">
+            <p style="font-size: 12px; margin: 5px 0;">nonstick.png</p>
+        </div>
+        <div>
+            <img src="mug.png" alt="Measuring Cups Test" style="width: 80px; height: 80px; border: 2px solid #ff6b3c; object-fit: cover;">
+            <p style="font-size: 12px; margin: 5px 0;">mug.png</p>
+        </div>
+        <div>
+            <img src="bowl.png" alt="Mixing Bowls Test" style="width: 80px; height: 80px; border: 2px solid #ff6b3c; object-fit: cover;">
+            <p style="font-size: 12px; margin: 5px 0;">bowl.png</p>
+        </div>
+        <div>
+            <img src="cuttingboard.png" alt="Cutting Board Test" style="width: 80px; height: 80px; border: 2px solid #ff6b3c; object-fit: cover;">
+            <p style="font-size: 12px; margin: 5px 0;">cuttingboard.png</p>
+        </div>
+    </div>
+</div>
+
 <footer>
     &copy; 2025 Cooking Essentials. All rights reserved. | <a href="#">Privacy Policy</a>
 </footer>
@@ -94,13 +126,13 @@ if(user){
     userLinks.appendChild(signup);
 }
 
-// Products with BDT prices
+// Products with BDT prices - CORRECTED IMAGE NAMES
 let products = [
     {name:"Chef Knife", price:4200, img:"chefknife.png"},
     {name:"Non-stick Pan", price:3500, img:"nonstick.png"},
     {name:"Measuring Cups", price:1200, img:"mug.png"},
     {name:"Mixing Bowls", price:2500, img:"bowl.png"},
-    {name:"Wooden Spoon", price:450, img:"woodenspoon.png"},
+    {name:"Wooden Spoon", price:450, img:"wooden spoon.jpg"},
     {name:"Cutting Board", price:1800, img:"cuttingboard.png"}
 ];
 
@@ -112,7 +144,7 @@ function displayProducts(){
         const card = document.createElement("div");
         card.className = "product-card";
         card.innerHTML = `
-            <img src="${prod.img}" alt="${prod.name}">
+            <img src="${prod.img}" alt="${prod.name}" onerror="this.src='https://via.placeholder.com/300x200/ffe4d6/ff6b3c?text=${encodeURIComponent(prod.name)}'">
             <div class="card-body">
                 <h3>${prod.name}</h3>
                 <p>৳${prod.price.toLocaleString('en-BD')} <span class="currency">BDT</span></p>
@@ -125,17 +157,33 @@ function displayProducts(){
 
 function addToCart(name, price, img){
     let cart = JSON.parse(localStorage.getItem("cart")) || [];
-    cart.push({name, price, img, qty:1});
+    
+    // Check if product already exists in cart
+    const existingItem = cart.find(item => item.name === name);
+    
+    if (existingItem) {
+        existingItem.qty += 1;
+    } else {
+        cart.push({
+            name: name,
+            price: price,
+            img: img,
+            qty: 1
+        });
+    }
+    
     localStorage.setItem("cart", JSON.stringify(cart));
     updateCartCount();
-    alert(name + " added to cart!");
+    alert('✅ ' + name + ' added to cart!');
 }
 
 function updateCartCount(){
     const cart = JSON.parse(localStorage.getItem("cart")) || [];
-    document.getElementById("cart-count").textContent = cart.length;
+    const totalItems = cart.reduce((total, item) => total + item.qty, 0);
+    document.getElementById("cart-count").textContent = totalItems;
 }
 
+// Initialize the page
 displayProducts();
 updateCartCount();
 </script>
