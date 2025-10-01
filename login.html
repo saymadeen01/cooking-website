@@ -2,42 +2,92 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Login - Cooking Essentials</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Utensil Utopia</title>
     <style>
-        body { font-family:'Segoe UI',sans-serif; background:#f9f9f9; text-align:center; padding:50px; }
-        .container { background:white; padding:40px; max-width:400px; margin:auto; border-radius:10px; box-shadow:0 4px 10px rgba(0,0,0,0.1); }
-        h1 { color:#ff6b3c; margin-bottom:20px; }
-        input { width:90%; padding:10px; margin:10px 0; border-radius:5px; border:1px solid #ccc; }
-        button { background:#ff6b3c; color:white; padding:10px 20px; border:none; border-radius:5px; cursor:pointer; transition:0.3s; }
-        button:hover { background:#e55a2c; }
-        a { display:block; margin-top:15px; color:#ff6b3c; text-decoration:none; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+        body { background: #f9f9f9; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+        .login-container { background: white; padding: 40px; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); width: 100%; max-width: 400px; }
+        h2 { text-align: center; color: #ff6b3c; margin-bottom: 30px; }
+        .form-group { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 5px; color: #333; }
+        input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 5px; font-size: 16px; }
+        button { width: 100%; padding: 12px; background: #ff6b3c; color: white; border: none; border-radius: 5px; font-size: 16px; cursor: pointer; }
+        button:hover { background: #e55a2c; }
+        .error { color: red; margin-top: 10px; text-align: center; }
+        .success { color: green; margin-top: 10px; text-align: center; }
+        .link { text-align: center; margin-top: 20px; }
+        a { color: #ff6b3c; text-decoration: none; }
     </style>
 </head>
 <body>
-<div class="container">
-    <h1>Login</h1>
-    <input type="email" id="email" placeholder="Email"><br>
-    <input type="password" id="password" placeholder="Password"><br>
-    <button onclick="login()">Login</button>
-    <a href="signup.html">Don't have an account? Sign Up</a>
-</div>
+    <div class="login-container">
+        <h2>Login to Your Account</h2>
+        <form id="loginForm">
+            <div class="form-group">
+                <label>Email:</label>
+                <input type="email" id="email" required>
+            </div>
+            <div class="form-group">
+                <label>Password:</label>
+                <input type="password" id="password" required>
+            </div>
+            <button type="submit">Login</button>
+            <div id="message" class="error"></div>
+        </form>
+        <div class="link">
+            <p>Don't have an account? <a href="signup.html">Sign up here</a></p>
+            <p><a href="index.html">← Back to Home</a></p>
+        </div>
+    </div>
 
-<script>
-    function login() {
-        const email = document.getElementById("email").value.trim();
-        const password = document.getElementById("password").value;
+    <script>
+        const API_BASE = '/api';
 
-        let users = JSON.parse(localStorage.getItem("users")) || [];
-        const user = users.find(u => u.email === email && u.password === password);
+        document.getElementById('loginForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const message = document.getElementById('message');
 
-        if(user){
-            localStorage.setItem("loggedInUser", JSON.stringify(user));
-            alert("Login successful!");
-            window.location.href = "index.html"; // redirect to homepage
-        } else {
-            alert("Invalid email or password!");
-        }
-    }
-</script>
+            try {
+                const response = await fetch(`${API_BASE}/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ email, password })
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    // Store token and user info
+                    localStorage.setItem('authToken', result.token);
+                    localStorage.setItem('loggedInUser', JSON.stringify(result.user));
+                    
+                    message.textContent = 'Login successful! Redirecting...';
+                    message.className = 'success';
+                    
+                    setTimeout(() => {
+                        window.location.href = 'index.html';
+                    }, 1000);
+                } else {
+                    message.textContent = result.error;
+                    message.className = 'error';
+                }
+            } catch (error) {
+                message.textContent = 'Login failed. Please try again.';
+                message.className = 'error';
+            }
+        });
+
+        // Try demo account automatically
+        window.addEventListener('load', function() {
+            document.getElementById('email').value = 'demo@example.com';
+            document.getElementById('password').value = 'password';
+        });
+    </script>
 </body>
 </html>

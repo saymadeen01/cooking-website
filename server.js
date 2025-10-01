@@ -9,14 +9,14 @@ const PORT = 80;
 
 // Middleware
 app.use(express.json());
-app.use(express.static(path.join(__dirname))); // Serve static files
+app.use(express.static(path.join(__dirname)));
 
-// In-memory database (replace with MongoDB/MySQL in production)
+// In-memory database (for development)
 let users = [];
 let orders = [];
 let products = [];
 
-// Load products from your frontend data
+// Load products
 const loadProducts = () => {
     products = [
         {
@@ -48,8 +48,67 @@ const loadProducts = () => {
                 "Dishwasher Safe": "Yes",
                 "Warranty": "2 years"
             }
+        },
+        {
+            id: 3,
+            name: "Measuring Cups", 
+            price: 250, 
+            img: "mug.png",
+            category: "tools",
+            description: "Accurate measuring cups set for perfect recipe execution.",
+            specifications: {
+                "Set Includes": "1/4, 1/3, 1/2, 1 cup sizes",
+                "Material": "BPA-free Plastic",
+                "Measurement": "Metric and Imperial",
+                "Dishwasher Safe": "Yes",
+                "Color": "Assorted"
+            }
+        },
+        {
+            id: 4,
+            name: "Mixing Bowls", 
+            price: 220, 
+            img: "bowl.png",
+            category: "bakeware",
+            description: "Versatile mixing bowls set with non-slip bases.",
+            specifications: {
+                "Set Includes": "3 bowls (1L, 2L, 3L)",
+                "Material": "Stainless Steel",
+                "Base": "Non-slip rubber",
+                "Nesting": "Yes, stackable",
+                "Dishwasher Safe": "Yes"
+            }
+        },
+        {
+            id: 5,
+            name: "Wooden Spoon", 
+            price: 450, 
+            img: "woodenspoon.png",
+            category: "tools",
+            description: "Handcrafted wooden spoon that's gentle on cookware.",
+            specifications: {
+                "Material": "Solid Beechwood",
+                "Length": "30 cm",
+                "Finish": "Food-safe oil",
+                "Care": "Hand wash, air dry",
+                "Features": "Non-scratch surface"
+            }
+        },
+        {
+            id: 6,
+            name: "Chopping Board", 
+            price: 600, 
+            img: "choppingboard.png",
+            category: "tools",
+            description: "Durable bamboo chopping board with juice groove.",
+            specifications: {
+                "Material": "100% Bamboo",
+                "Size": "35 x 25 cm",
+                "Thickness": "2 cm",
+                "Features": "Juice groove, non-slip feet",
+                "Care": "Hand wash, oil periodically"
+            }
         }
-        // Add all your other products here...
     ];
 };
 
@@ -195,50 +254,22 @@ app.get("/api/orders", authenticate, (req, res) => {
     }
 });
 
-// Update order status (for admin)
-app.patch("/api/orders/:orderId", authenticate, (req, res) => {
-    try {
-        const { orderId } = req.params;
-        const { status } = req.body;
-
-        const order = orders.find(order => order.id === orderId);
-        if (!order) {
-            return res.status(404).json({ error: "Order not found" });
-        }
-
-        order.status = status;
-        order.updatedAt = new Date();
-
-        res.json({
-            message: "Order updated successfully",
-            order
-        });
-
-    } catch (error) {
-        res.status(500).json({ error: "Server error" });
-    }
-});
-
-// Serve HTML files for all other routes (SPA support)
+// Serve HTML files for all other routes
 app.get("*", (req, res) => {
     const filePath = path.join(__dirname, req.url === "/" ? "index.html" : req.url);
     
     fs.readFile(filePath, (err, content) => {
         if (err) {
-            // If file not found, serve index.html for SPA routing
             if (err.code === 'ENOENT') {
                 fs.readFile(path.join(__dirname, "index.html"), (err, content) => {
                     if (err) {
-                        res.writeHead(404, {"Content-Type":"text/html"});
-                        res.end("<h1>404 Not Found</h1><a href='/'>Back to Home</a>");
+                        res.status(404).send("<h1>404 Not Found</h1><a href='/'>Back to Home</a>");
                     } else {
-                        res.writeHead(200, {"Content-Type":"text/html"});
-                        res.end(content);
+                        res.type('html').send(content);
                     }
                 });
             } else {
-                res.writeHead(500, {"Content-Type":"text/html"});
-                res.end("<h1>500 Server Error</h1>");
+                res.status(500).send("<h1>500 Server Error</h1>");
             }
         } else {
             const extname = path.extname(filePath);
@@ -259,16 +290,25 @@ app.get("*", (req, res) => {
                     break;
             }
             
-            res.writeHead(200, {"Content-Type": contentType});
-            res.end(content);
+            res.type(contentType).send(content);
         }
     });
 });
 
-// Initialize products
+// Initialize products and sample data
 loadProducts();
 
-// Add some sample orders for testing
+// Add sample user for testing
+users.push({
+    id: 1,
+    name: "Demo User",
+    email: "demo@example.com",
+    password: "$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi", // password
+    phone: "01712345678",
+    createdAt: new Date()
+});
+
+// Add sample orders for testing
 orders.push(
     {
         id: "ORD001",
@@ -283,33 +323,11 @@ orders.push(
         phone: "01712345678",
         status: "delivered",
         createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
-    },
-    {
-        id: "ORD002",
-        userId: 1,
-        items: [
-            { name: "Non-stick Pan", price: 3500, quantity: 1, image: "nonstick.png" }
-        ],
-        total: 3500,
-        shippingAddress: "123 Main St, Dhaka",
-        paymentMethod: "Cash on Delivery",
-        phone: "01712345678",
-        status: "shipped",
-        createdAt: new Date()
     }
 );
 
-// Add a sample user for testing
-users.push({
-    id: 1,
-    name: "Demo User",
-    email: "demo@example.com",
-    password: "$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi", // password
-    phone: "01712345678",
-    createdAt: new Date()
-});
-
 app.listen(PORT, () => {
-    console.log(`Server running at http://ecommerce.local`);
-    console.log(`API endpoints available at http://ecommerce.local/api/`);
+    console.log(`🚀 Server running at http://ecommerce.local`);
+    console.log(`📡 API endpoints available at http://ecommerce.local/api/`);
+    console.log(`👤 Demo user: demo@example.com / password`);
 });
