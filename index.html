@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Cooking Essentials</title>
+<title>Utensil Utopia - Premium Cooking Tools</title>
 <style>
 * { margin:0; padding:0; box-sizing:border-box; font-family:'Segoe UI',sans-serif; }
 body { background:#f9f9f9; color:#333; }
@@ -19,24 +19,41 @@ nav a:hover { color:#ffe4d6; }
 .products { padding:50px 20px; text-align:center; }
 .products h2 { font-size:36px; margin-bottom:35px; }
 .product-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:25px; }
-.product-card { background:white; border-radius:10px; box-shadow:0 5px 15px rgba(0,0,0,0.1); overflow:hidden; transition:transform 0.3s; position:relative; }
+.product-card { background:white; border-radius:10px; box-shadow:0 5px 15px rgba(0,0,0,0.1); overflow:hidden; transition:transform 0.3s; position:relative; cursor:pointer; }
 .product-card:hover { transform:translateY(-5px); }
 .product-card img { width:100%; height:200px; object-fit:cover; }
 .card-body { padding:15px; }
 .card-body h3 { font-size:20px; margin-bottom:10px; }
 .card-body p { color:#555; font-size:15px; margin-bottom:15px; }
-.card-body button { display:inline-block; background-color:#ff6b3c; color:white; padding:8px 18px; border:none; border-radius:5px; cursor:pointer; font-weight:bold; transition:0.3s; }
+.card-body button { display:inline-block; background-color:#ff6b3c; color:white; padding:8px 18px; border:none; border-radius:5px; cursor:pointer; font-weight:bold; transition:0.3s; margin:2px; }
 .card-body button:hover { background-color:#e55a2c; }
 footer { background:#333; color:white; padding:20px 40px; text-align:center; }
 footer a { color:#ff6b3c; text-decoration:none; }
 .cart-count { background:white; color:#ff6b3c; border-radius:50%; padding:2px 7px; font-size:12px; vertical-align:top; margin-left:5px; }
 .currency { font-size:14px; color:#666; margin-left:2px; }
+
+/* Product Detail Modal Styles */
+.product-modal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:2000; overflow-y:auto; }
+.modal-content { background:white; margin:50px auto; padding:30px; border-radius:15px; max-width:800px; width:90%; position:relative; }
+.close-modal { position:absolute; top:15px; right:20px; font-size:30px; cursor:pointer; color:#333; }
+.product-detail { display:flex; gap:30px; margin-bottom:25px; }
+.product-image { flex:1; }
+.product-image img { width:100%; border-radius:10px; }
+.product-info { flex:1; }
+.product-info h2 { color:#ff6b3c; margin-bottom:15px; }
+.product-price { font-size:24px; font-weight:bold; color:#333; margin-bottom:15px; }
+.specifications { background:#f8f8f8; padding:20px; border-radius:10px; margin:20px 0; }
+.specifications h3 { margin-bottom:15px; color:#333; }
+.spec-list { list-style:none; }
+.spec-list li { padding:8px 0; border-bottom:1px solid #eee; }
+.spec-list li:last-child { border-bottom:none; }
+.description { line-height:1.6; margin:15px 0; }
 </style>
 </head>
 <body>
 
 <header>
-    <h1>Cooking Essentials</h1>
+    <h1>Utensil Utopia</h1>
     <nav id="nav-links">
         <a href="#products">Products</a>
         <a href="cart.html">Cart <span class="cart-count" id="cart-count">0</span></a>
@@ -45,20 +62,30 @@ footer a { color:#ff6b3c; text-decoration:none; }
 </header>
 
 <section class="hero">
-    <h2>Cook Like a Pro</h2>
-    <p>Discover premium cooking essentials for every kitchen. Stylish, durable tools that make cooking a joy!</p>
-    <a href="#products" class="btn">Shop Now</a>
+    <h2>Your Perfect Kitchen Awaits</h2>
+    <p>Discover premium cooking utensils that transform your kitchen into a culinary paradise. Quality tools for exceptional cooking experiences!</p>
+    <a href="#products" class="btn">Explore Collection</a>
 </section>
 
 <section class="products" id="products">
-    <h2>Our Top Products</h2>
+    <h2>Featured Utensils</h2>
     <div class="product-grid" id="product-grid">
         <!-- Products will be loaded here dynamically -->
     </div>
 </section>
 
+<!-- Product Detail Modal -->
+<div id="productModal" class="product-modal">
+    <div class="modal-content">
+        <span class="close-modal">&times;</span>
+        <div id="modalContent">
+            <!-- Product details will be loaded here -->
+        </div>
+    </div>
+</div>
+
 <footer>
-    &copy; 2025 Cooking Essentials. All rights reserved. | <a href="#">Privacy Policy</a>
+    &copy; 2025 Utensil Utopia. All rights reserved. | <a href="#">Privacy Policy</a>
 </footer>
 
 <script>
@@ -94,24 +121,169 @@ if(user){
     userLinks.appendChild(signup);
 }
 
-// Products with BDT prices
+// Enhanced Products with descriptions and specifications
 let products = [
-    {name:"Chef Knife", price:420, img:"chefknife.png"},
-    {name:"Non-stick Pan", price:3500, img:"nonstick.png"},
-    {name:"Measuring Cups", price:250, img:"mug.png"},
-    {name:"Mixing Bowls", price:220, img:"bowl.png"},
-    {name:"Wooden Spoon", price:450, img:"woodenspoon.png"},
-    {name:"Chopping Board", price:600, img:"choppingboard.png"},
-    {name:"Microplane Grater", price:350, img:"microplanegraters.jpg"},
-    {name:"Electric Kettle", price:950, img:"electrickettele.png"},
-    {name:"Rice Cooker ", price:3200, img:"ricecooker.png"},
-    {name:"Pressure Cooker ", price:3000, img:"pressurecooker.png"},
-    {name:"Patila Cooker Container Hot Pot Stand ", price:90, img:"patilacookercontainerhotpotstand.png"},
-    {name:"Silicon Rubber Spatula ", price:220, img:"siliconrubberspatula.png"}
-
+    {
+        name: "Chef Knife", 
+        price: 420, 
+        img: "chefknife.png",
+        description: "Professional-grade chef knife perfect for precision cutting, slicing, and dicing. Made from high-carbon stainless steel for exceptional sharpness and durability.",
+        specifications: {
+            "Material": "High-Carbon Stainless Steel",
+            "Blade Length": "8 inches",
+            "Handle": "Ergonomic Pakkawood",
+            "Weight": "250g",
+            "Care": "Hand wash only"
+        }
+    },
+    {
+        name: "Non-stick Pan", 
+        price: 3500, 
+        img: "nonstick.png",
+        description: "Premium non-stick frying pan with even heat distribution. Perfect for healthy cooking with minimal oil usage.",
+        specifications: {
+            "Material": "Aluminum with Ceramic Coating",
+            "Diameter": "28 cm",
+            "Heat Resistance": "Up to 260°C",
+            "Dishwasher Safe": "Yes",
+            "Warranty": "2 years"
+        }
+    },
+    {
+        name: "Measuring Cups", 
+        price: 250, 
+        img: "mug.png",
+        description: "Accurate measuring cups set for perfect recipe execution. Stackable design for easy storage.",
+        specifications: {
+            "Set Includes": "1/4, 1/3, 1/2, 1 cup sizes",
+            "Material": "BPA-free Plastic",
+            "Measurement": "Metric and Imperial",
+            "Dishwasher Safe": "Yes",
+            "Color": "Assorted"
+        }
+    },
+    {
+        name: "Mixing Bowls", 
+        price: 220, 
+        img: "bowl.png",
+        description: "Versatile mixing bowls set with non-slip bases. Ideal for mixing, marinating, and serving.",
+        specifications: {
+            "Set Includes": "3 bowls (1L, 2L, 3L)",
+            "Material": "Stainless Steel",
+            "Base": "Non-slip rubber",
+            "Nesting": "Yes, stackable",
+            "Dishwasher Safe": "Yes"
+        }
+    },
+    {
+        name: "Wooden Spoon", 
+        price: 450, 
+        img: "woodenspoon.png",
+        description: "Handcrafted wooden spoon that's gentle on cookware. Perfect for stirring, mixing, and serving.",
+        specifications: {
+            "Material": "Solid Beechwood",
+            "Length": "30 cm",
+            "Finish": "Food-safe oil",
+            "Care": "Hand wash, air dry",
+            "Features": "Non-scratch surface"
+        }
+    },
+    {
+        name: "Chopping Board", 
+        price: 600, 
+        img: "choppingboard.png",
+        description: "Durable bamboo chopping board with juice groove. Natural antibacterial properties.",
+        specifications: {
+            "Material": "100% Bamboo",
+            "Size": "35 x 25 cm",
+            "Thickness": "2 cm",
+            "Features": "Juice groove, non-slip feet",
+            "Care": "Hand wash, oil periodically"
+        }
+    },
+    {
+        name: "Microplane Grater", 
+        price: 350, 
+        img: "microplanegraters.jpg",
+        description: "Ultra-sharp grater for zesting, grating cheese, and spices with precision.",
+        specifications: {
+            "Material": "Stainless Steel",
+            "Length": "25 cm",
+            "Grating Surface": "Laser-cut sharp edges",
+            "Handle": "Comfort-grip",
+            "Dishwasher Safe": "Yes"
+        }
+    },
+    {
+        name: "Electric Kettle", 
+        price: 950, 
+        img: "electrickettele.png",
+        description: "Fast-boiling electric kettle with automatic shut-off and boil-dry protection.",
+        specifications: {
+            "Capacity": "1.7 Liters",
+            "Power": "1500W",
+            "Material": "Stainless Steel",
+            "Features": "Auto shut-off, boil-dry protection",
+            "Cordless": "Yes"
+        }
+    },
+    {
+        name: "Rice Cooker", 
+        price: 3200, 
+        img: "ricecooker.png",
+        description: "Automatic rice cooker with keep-warm function. Perfect for fluffy rice every time.",
+        specifications: {
+            "Capacity": "1.8 Liters",
+            "Power": "400W",
+            "Functions": "Cook, Keep Warm",
+            "Inner Pot": "Non-stick coating",
+            "Measurements": "Cup markings included"
+        }
+    },
+    {
+        name: "Pressure Cooker", 
+        price: 3000, 
+        img: "pressurecooker.png",
+        description: "Safe and efficient pressure cooker for fast, energy-saving cooking.",
+        specifications: {
+            "Capacity": "5 Liters",
+            "Material": "Stainless Steel",
+            "Safety Features": "Multiple safety valves",
+            "Pressure Settings": "2 levels",
+            "Compatibility": "All stovetops"
+        }
+    },
+    {
+        name: "Patila Cooker Container Hot Pot Stand", 
+        price: 90, 
+        img: "patilacookercontainerhotpotstand.png",
+        description: "Essential stand for safe and stable cooking with various pots and containers.",
+        specifications: {
+            "Material": "Stainless Steel",
+            "Diameter": "15 cm",
+            "Height": "5 cm",
+            "Features": "Heat resistant, stable base",
+            "Compatibility": "Universal fit"
+        }
+    },
+    {
+        name: "Silicon Rubber Spatula", 
+        price: 220, 
+        img: "siliconrubberspatula.png",
+        description: "Heat-resistant silicone spatula that's gentle on all cookware surfaces.",
+        specifications: {
+            "Material": "Food-grade Silicone",
+            "Heat Resistance": "Up to 230°C",
+            "Handle": "Stainless Steel",
+            "Features": "Non-scratch, flexible head",
+            "Dishwasher Safe": "Yes"
+        }
+    }
 ];
 
 const grid = document.getElementById("product-grid");
+const productModal = document.getElementById("productModal");
+const modalContent = document.getElementById("modalContent");
 
 function displayProducts(){
     grid.innerHTML = "";
@@ -119,15 +291,61 @@ function displayProducts(){
         const card = document.createElement("div");
         card.className = "product-card";
         card.innerHTML = `
-            <img src="${prod.img}" alt="${prod.name}">
+            <img src="${prod.img}" alt="${prod.name}" onclick="showProductDetail('${prod.name}')">
             <div class="card-body">
-                <h3>${prod.name}</h3>
+                <h3 onclick="showProductDetail('${prod.name}')" style="cursor:pointer;">${prod.name}</h3>
                 <p>৳${prod.price.toLocaleString('en-BD')} <span class="currency">BDT</span></p>
+                <button onclick="showProductDetail('${prod.name}')">View Details</button>
                 <button onclick="addToCart('${prod.name}',${prod.price},'${prod.img}')">Add to Cart</button>
             </div>
         `;
         grid.appendChild(card);
     });
+}
+
+function showProductDetail(productName) {
+    const product = products.find(p => p.name === productName);
+    if (product) {
+        let specsHTML = '';
+        for (const [key, value] of Object.entries(product.specifications)) {
+            specsHTML += `<li><strong>${key}:</strong> ${value}</li>`;
+        }
+
+        modalContent.innerHTML = `
+            <div class="product-detail">
+                <div class="product-image">
+                    <img src="${product.img}" alt="${product.name}">
+                </div>
+                <div class="product-info">
+                    <h2>${product.name}</h2>
+                    <div class="product-price">৳${product.price.toLocaleString('en-BD')} BDT</div>
+                    <div class="description">
+                        ${product.description}
+                    </div>
+                    <div class="specifications">
+                        <h3>Specifications</h3>
+                        <ul class="spec-list">
+                            ${specsHTML}
+                        </ul>
+                    </div>
+                    <button class="btn" onclick="addToCart('${product.name}',${product.price},'${product.img}'); productModal.style.display='none';">Add to Cart</button>
+                </div>
+            </div>
+        `;
+        productModal.style.display = 'block';
+    }
+}
+
+// Close modal when clicking X
+document.querySelector('.close-modal').onclick = function() {
+    productModal.style.display = 'none';
+}
+
+// Close modal when clicking outside
+window.onclick = function(event) {
+    if (event.target == productModal) {
+        productModal.style.display = 'none';
+    }
 }
 
 function addToCart(name, price, img){
