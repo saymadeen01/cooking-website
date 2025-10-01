@@ -1,150 +1,325 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Utensil Utopia</title>
-<style>
-* { margin:0; padding:0; box-sizing:border-box; font-family:'Segoe UI',sans-serif; }
-body { background:#f9f9f9; color:#333; }
-header { background:#ff6b3c; color:white; padding:15px 40px; display:flex; justify-content:space-between; align-items:center; position:sticky; top:0; z-index:1000; }
-header h1 { font-size:26px; }
-nav a { color:white; text-decoration:none; margin-left:20px; font-weight:bold; transition:color 0.3s; }
-nav a:hover { color:#ffe4d6; }
-.hero { text-align:center; padding:60px 20px; background:#ffe4d6; }
-.hero h2 { font-size:48px; margin-bottom:15px; color:#ff6b3c; }
-.hero p { font-size:18px; margin-bottom:25px; }
-.btn { background:#ff6b3c; color:white; padding:12px 25px; text-decoration:none; font-weight:bold; border-radius:5px; transition:0.3s; }
-.btn:hover { background:#e55a2c; }
-.products { padding:50px 20px; text-align:center; }
-.products h2 { font-size:36px; margin-bottom:35px; }
-.product-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:25px; }
-.product-card { background:white; border-radius:10px; box-shadow:0 5px 15px rgba(0,0,0,0.1); overflow:hidden; transition:transform 0.3s; position:relative; }
-.product-card:hover { transform:translateY(-5px); }
-.product-card img { width:100%; height:200px; object-fit:cover; }
-.card-body { padding:15px; }
-.card-body h3 { font-size:20px; margin-bottom:10px; }
-.card-body p { color:#555; font-size:15px; margin-bottom:15px; }
-.card-body button { display:inline-block; background-color:#ff6b3c; color:white; padding:8px 18px; border:none; border-radius:5px; cursor:pointer; font-weight:bold; transition:0.3s; }
-.card-body button:hover { background-color:#e55a2c; }
-footer { background:#333; color:white; padding:20px 40px; text-align:center; }
-footer a { color:#ff6b3c; text-decoration:none; }
-.cart-count { background:white; color:#ff6b3c; border-radius:50%; padding:2px 7px; font-size:12px; vertical-align:top; margin-left:5px; }
-.currency { font-size:14px; color:#666; margin-left:2px; }
-</style>
-</head>
-<body>
+const express = require("express");
+const fs = require("fs");
+const path = require("path");
+const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
 
-<header>
-    <h1>Utensil Utopia</h1>
-    <nav id="nav-links">
-        <a href="#products">Products</a>
-        <a href="cart.html">Cart <span class="cart-count" id="cart-count">0</span></a>
-        <span id="user-links"></span>
-    </nav>
-</header>
+const app = express();
+const PORT = 3000; // Changed from 80 to avoid permission issues
 
-<section class="hero">
-    <h2>Cook Like a Pro</h2>
-    <p>Discover premium cooking essentials for every kitchen. Stylish, durable tools that make cooking a joy!</p>
-    <a href="#products" class="btn">Shop Now</a>
-</section>
+// Middleware
+app.use(express.json());
+app.use(express.static(path.join(__dirname)));
 
-<section class="products" id="products">
-    <h2>Our Top Products</h2>
-    <div class="product-grid" id="product-grid">
-        <!-- Products will be loaded here dynamically -->
-    </div>
-</section>
+// In-memory database
+let users = [];
+let orders = [];
+let products = [];
 
-<footer>
-    &copy; 2025 Utensil Utopia. All rights reserved. | <a href="#">Privacy Policy</a>
-</footer>
+// Load products
+const loadProducts = () => {
+    products = [
+        {
+            id: 1,
+            name: "Chef Knife", 
+            price: 420, 
+            img: "chefknife.png",
+            category: "cutlery",
+            description: "Professional-grade chef knife perfect for precision cutting, slicing, and dicing.",
+            specifications: {
+                "Material": "High-Carbon Stainless Steel",
+                "Blade Length": "8 inches",
+                "Handle": "Ergonomic Pakkawood",
+                "Weight": "250g",
+                "Care": "Hand wash only"
+            }
+        },
+        {
+            id: 2,
+            name: "Non-stick Pan", 
+            price: 3500, 
+            img: "nonstick.png",
+            category: "cookware",
+            description: "Premium non-stick frying pan with even heat distribution.",
+            specifications: {
+                "Material": "Aluminum with Ceramic Coating",
+                "Diameter": "28 cm",
+                "Heat Resistance": "Up to 260°C",
+                "Dishwasher Safe": "Yes",
+                "Warranty": "2 years"
+            }
+        },
+        {
+            id: 3,
+            name: "Measuring Cups", 
+            price: 250, 
+            img: "mug.png",
+            category: "tools",
+            description: "Accurate measuring cups set for perfect recipe execution.",
+            specifications: {
+                "Set Includes": "1/4, 1/3, 1/2, 1 cup sizes",
+                "Material": "BPA-free Plastic",
+                "Measurement": "Metric and Imperial",
+                "Dishwasher Safe": "Yes",
+                "Color": "Assorted"
+            }
+        },
+        {
+            id: 4,
+            name: "Mixing Bowls", 
+            price: 220, 
+            img: "bowl.png",
+            category: "bakeware",
+            description: "Versatile mixing bowls set with non-slip bases.",
+            specifications: {
+                "Set Includes": "3 bowls (1L, 2L, 3L)",
+                "Material": "Stainless Steel",
+                "Base": "Non-slip rubber",
+                "Nesting": "Yes, stackable",
+                "Dishwasher Safe": "Yes"
+            }
+        },
+        {
+            id: 5,
+            name: "Wooden Spoon", 
+            price: 450, 
+            img: "woodenspoon.png",
+            category: "tools",
+            description: "Handcrafted wooden spoon that's gentle on cookware.",
+            specifications: {
+                "Material": "Solid Beechwood",
+                "Length": "30 cm",
+                "Finish": "Food-safe oil",
+                "Care": "Hand wash, air dry",
+                "Features": "Non-scratch surface"
+            }
+        },
+        {
+            id: 6,
+            name: "Chopping Board", 
+            price: 600, 
+            img: "choppingboard.png",
+            category: "tools",
+            description: "Durable bamboo chopping board with juice groove.",
+            specifications: {
+                "Material": "100% Bamboo",
+                "Size": "35 x 25 cm",
+                "Thickness": "2 cm",
+                "Features": "Juice groove, non-slip feet",
+                "Care": "Hand wash, oil periodically"
+            }
+        }
+    ];
+};
 
-<script>
-const userLinks = document.getElementById("user-links");
+// Authentication middleware
+const authenticate = (req, res, next) => {
+    const token = req.header('Authorization')?.replace('Bearer ', '');
+    
+    if (!token) {
+        return res.status(401).json({ error: 'Access denied. No token provided.' });
+    }
 
-// Check logged-in user
-const user = JSON.parse(localStorage.getItem("loggedInUser"));
-if(user){
-    const welcome = document.createElement('span');
-    welcome.textContent = `Welcome, ${user.name}`;
-    welcome.style.marginLeft = "15px";
-    userLinks.appendChild(welcome);
+    try {
+        const verified = jwt.verify(token, 'your_secret_key');
+        req.user = verified;
+        next();
+    } catch (error) {
+        res.status(400).json({ error: 'Invalid token.' });
+    }
+};
 
-    const logoutBtn = document.createElement('button');
-    logoutBtn.textContent = "Logout";
-    logoutBtn.style.marginLeft = "10px";
-    logoutBtn.style.padding = "5px 10px";
-    logoutBtn.style.border = "none";
-    logoutBtn.style.borderRadius = "5px";
-    logoutBtn.style.cursor = "pointer";
-    logoutBtn.onclick = () => { localStorage.removeItem("loggedInUser"); location.reload(); };
-    userLinks.appendChild(logoutBtn);
-}else{
-    const login = document.createElement('a');
-    login.href = "login.html";
-    login.textContent = "Login";
-    login.style.marginLeft = "15px";
-    userLinks.appendChild(login);
-    const signup = document.createElement('a');
-    signup.href = "signup.html";
-    signup.textContent = "Signup";
-    signup.style.marginLeft = "10px";
-    userLinks.appendChild(signup);
-}
+// API Routes
 
-// Products with BDT prices
-let products = [
-    {name:"Chef Knife", price:420, img:"chefknife.png"},
-    {name:"Non-stick Pan", price:3500, img:"nonstick.png"},
-    {name:"Measuring Cups", price:250, img:"mug.png"},
-    {name:"Mixing Bowls", price:220, img:"bowl.png"},
-    {name:"Wooden Spoon", price:450, img:"woodenspoon.png"},
-    {name:"Chopping Board", price:600, img:"choppingboard.png"},
-    {name:"Microplane Grater", price:350, img:"microplanegrater.png"},
-    {name:"Electric Kettle", price:950, img:"electrickettele.png"},
-    {name:"Rice Cooker ", price:3200, img:"ricecooker.png"},
-    {name:"Pressure Cooker ", price:3000, img:"pressurecooker.png"},
-    {name:"Patila Cooker Container Hot Pot Stand ", price:90, img:"patilacookercontainerhotpotstand.png"},
-    {name:"Silicon Rubber Spatula ", price:220, img:"siliconrubberspatula.png"}
-];
+// Get all products
+app.get("/api/products", (req, res) => {
+    res.json(products);
+});
 
-const grid = document.getElementById("product-grid");
+// User registration
+app.post("/api/register", async (req, res) => {
+    try {
+        const { name, email, password, phone } = req.body;
 
-function displayProducts(){
-    grid.innerHTML = "";
-    products.forEach(prod => {
-        const card = document.createElement("div");
-        card.className = "product-card";
-        card.innerHTML = `
-            <img src="${prod.img}" alt="${prod.name}">
-            <div class="card-body">
-                <h3>${prod.name}</h3>
-                <p>৳${prod.price.toLocaleString('en-BD')} <span class="currency">BDT</span></p>
-                <button onclick="addToCart('${prod.name}',${prod.price},'${prod.img}')">Add to Cart</button>
-            </div>
-        `;
-        grid.appendChild(card);
+        const existingUser = users.find(user => user.email === email);
+        if (existingUser) {
+            return res.status(400).json({ error: "User already exists" });
+        }
+
+        const hashedPassword = await bcrypt.hash(password, 10);
+
+        const user = {
+            id: users.length + 1,
+            name,
+            email,
+            password: hashedPassword,
+            phone,
+            createdAt: new Date()
+        };
+
+        users.push(user);
+
+        const token = jwt.sign(
+            { id: user.id, name: user.name, email: user.email },
+            'your_secret_key',
+            { expiresIn: '24h' }
+        );
+
+        res.status(201).json({
+            message: "User created successfully",
+            token,
+            user: { id: user.id, name: user.name, email: user.email, phone: user.phone }
+        });
+
+    } catch (error) {
+        res.status(500).json({ error: "Server error" });
+    }
+});
+
+// User login
+app.post("/api/login", async (req, res) => {
+    try {
+        const { email, password } = req.body;
+
+        const user = users.find(user => user.email === email);
+        if (!user) {
+            return res.status(400).json({ error: "User not found" });
+        }
+
+        const validPassword = await bcrypt.compare(password, user.password);
+        if (!validPassword) {
+            return res.status(400).json({ error: "Invalid password" });
+        }
+
+        const token = jwt.sign(
+            { id: user.id, name: user.name, email: user.email },
+            'your_secret_key',
+            { expiresIn: '24h' }
+        );
+
+        res.json({
+            message: "Login successful",
+            token,
+            user: { id: user.id, name: user.name, email: user.email, phone: user.phone }
+        });
+
+    } catch (error) {
+        res.status(500).json({ error: "Server error" });
+    }
+});
+
+// Create order
+app.post("/api/orders", authenticate, (req, res) => {
+    try {
+        const { items, total, shippingAddress, paymentMethod, phone } = req.body;
+
+        const order = {
+            id: `ORD${Date.now()}`,
+            userId: req.user.id,
+            items,
+            total,
+            shippingAddress,
+            paymentMethod,
+            phone,
+            status: "pending",
+            createdAt: new Date()
+        };
+
+        orders.push(order);
+
+        res.status(201).json({
+            message: "Order created successfully",
+            order
+        });
+
+    } catch (error) {
+        res.status(500).json({ error: "Server error" });
+    }
+});
+
+// Get user orders
+app.get("/api/orders", authenticate, (req, res) => {
+    try {
+        const userOrders = orders.filter(order => order.userId === req.user.id);
+        res.json(userOrders);
+    } catch (error) {
+        res.status(500).json({ error: "Server error" });
+    }
+});
+
+// Serve HTML files
+app.get("*", (req, res) => {
+    const filePath = path.join(__dirname, req.url === "/" ? "index.html" : req.url);
+    
+    fs.readFile(filePath, (err, content) => {
+        if (err) {
+            if (err.code === 'ENOENT') {
+                fs.readFile(path.join(__dirname, "index.html"), (err, content) => {
+                    if (err) {
+                        res.status(404).send("<h1>404 Not Found</h1><a href='/'>Back to Home</a>");
+                    } else {
+                        res.type('html').send(content);
+                    }
+                });
+            } else {
+                res.status(500).send("<h1>500 Server Error</h1>");
+            }
+        } else {
+            const extname = path.extname(filePath);
+            let contentType = 'text/html';
+            
+            switch (extname) {
+                case '.js':
+                    contentType = 'text/javascript';
+                    break;
+                case '.css':
+                    contentType = 'text/css';
+                    break;
+                case '.png':
+                    contentType = 'image/png';
+                    break;
+                case '.jpg':
+                    contentType = 'image/jpg';
+                    break;
+            }
+            
+            res.type(contentType).send(content);
+        }
     });
-}
+});
 
-function addToCart(name, price, img){
-    let cart = JSON.parse(localStorage.getItem("cart")) || [];
-    cart.push({name, price, img, qty:1});
-    localStorage.setItem("cart", JSON.stringify(cart));
-    updateCartCount();
-    alert(name + " added to cart!");
-}
+// Initialize
+loadProducts();
 
-function updateCartCount(){
-    const cart = JSON.parse(localStorage.getItem("cart")) || [];
-    document.getElementById("cart-count").textContent = cart.length;
-}
+// Sample data
+users.push({
+    id: 1,
+    name: "Demo User",
+    email: "demo@example.com",
+    password: "$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi", // password
+    phone: "01712345678",
+    createdAt: new Date()
+});
 
-displayProducts();
-updateCartCount();
-</script>
+orders.push(
+    {
+        id: "ORD001",
+        userId: 1,
+        items: [
+            { name: "Chef Knife", price: 420, quantity: 1, image: "chefknife.png" },
+            { name: "Wooden Spoon", price: 450, quantity: 2, image: "woodenspoon.png" }
+        ],
+        total: 1320,
+        shippingAddress: "123 Main St, Dhaka",
+        paymentMethod: "Cash on Delivery",
+        phone: "01712345678",
+        status: "delivered",
+        createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+    }
+);
 
-</body>
-</html>
+app.listen(PORT, () => {
+    console.log(`🚀 Server running at http://localhost:${PORT}`);
+    console.log(`📡 API endpoints available at http://localhost:${PORT}/api/`);
+    console.log(`👤 Demo user: demo@example.com / password`);
+});
