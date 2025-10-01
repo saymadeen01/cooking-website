@@ -1,325 +1,572 @@
-const express = require("express");
-const fs = require("fs");
-const path = require("path");
-const bcrypt = require("bcryptjs");
-const jwt = require("jsonwebtoken");
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Utensil Utopia - Premium Cooking Tools</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; font-family:'Segoe UI',sans-serif; }
+body { background:#f9f9f9; color:#333; }
+header { background:#ff6b3c; color:white; padding:15px 40px; display:flex; justify-content:space-between; align-items:center; position:sticky; top:0; z-index:1000; }
+header h1 { font-size:26px; }
+nav a { color:white; text-decoration:none; margin-left:20px; font-weight:bold; transition:color 0.3s; }
+nav a:hover { color:#ffe4d6; }
+.hero { text-align:center; padding:60px 20px; background:#ffe4d6; }
+.hero h2 { font-size:48px; margin-bottom:15px; color:#ff6b3c; }
+.hero p { font-size:18px; margin-bottom:25px; }
+.btn { background:#ff6b3c; color:white; padding:12px 25px; text-decoration:none; font-weight:bold; border-radius:5px; transition:0.3s; }
+.btn:hover { background:#e55a2c; }
+.products { padding:50px 20px; text-align:center; }
+.products h2 { font-size:36px; margin-bottom:35px; }
+.product-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:25px; }
+.product-card { background:white; border-radius:10px; box-shadow:0 5px 15px rgba(0,0,0,0.1); overflow:hidden; transition:transform 0.3s; position:relative; cursor:pointer; }
+.product-card:hover { transform:translateY(-5px); }
+.product-card img { width:100%; height:200px; object-fit:cover; }
+.card-body { padding:15px; }
+.card-body h3 { font-size:20px; margin-bottom:10px; }
+.card-body p { color:#555; font-size:15px; margin-bottom:15px; }
+.card-body button { display:inline-block; background-color:#ff6b3c; color:white; padding:8px 18px; border:none; border-radius:5px; cursor:pointer; font-weight:bold; transition:0.3s; margin:2px; }
+.card-body button:hover { background-color:#e55a2c; }
+footer { background:#333; color:white; padding:20px 40px; text-align:center; }
+footer a { color:#ff6b3c; text-decoration:none; }
+.cart-count { background:white; color:#ff6b3c; border-radius:50%; padding:2px 7px; font-size:12px; vertical-align:top; margin-left:5px; }
+.currency { font-size:14px; color:#666; margin-left:2px; }
 
-const app = express();
-const PORT = 3000; // Changed from 80 to avoid permission issues
+/* Product Detail Modal Styles */
+.product-modal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:2000; overflow-y:auto; }
+.modal-content { background:white; margin:50px auto; padding:30px; border-radius:15px; max-width:800px; width:90%; position:relative; }
+.close-modal { position:absolute; top:15px; right:20px; font-size:30px; cursor:pointer; color:#333; }
+.product-detail { display:flex; gap:30px; margin-bottom:25px; }
+.product-image { flex:1; }
+.product-image img { width:100%; border-radius:10px; }
+.product-info { flex:1; }
+.product-info h2 { color:#ff6b3c; margin-bottom:15px; }
+.product-price { font-size:24px; font-weight:bold; color:#333; margin-bottom:15px; }
+.specifications { background:#f8f8f8; padding:20px; border-radius:10px; margin:20px 0; }
+.specifications h3 { margin-bottom:15px; color:#333; }
+.spec-list { list-style:none; }
+.spec-list li { padding:8px 0; border-bottom:1px solid #eee; }
+.spec-list li:last-child { border-bottom:none; }
+.description { line-height:1.6; margin:15px 0; }
 
-// Middleware
-app.use(express.json());
-app.use(express.static(path.join(__dirname)));
+/* Category Menu Styles */
+.menu-btn { display:none; flex-direction:column; cursor:pointer; padding:5px; }
+.menu-btn span { width:25px; height:3px; background:white; margin:3px 0; transition:0.3s; }
+.categories { background:#333; padding:15px 0; text-align:center; }
+.category-btn { background:#555; color:white; border:none; padding:10px 20px; margin:0 10px; border-radius:25px; cursor:pointer; font-weight:bold; transition:0.3s; }
+.category-btn:hover, .category-btn.active { background:#ff6b3c; }
+.category-title { text-align:center; margin-bottom:20px; color:#ff6b3c; font-size:28px; }
 
-// In-memory database
-let users = [];
-let orders = [];
-let products = [];
+/* Orders Section */
+.orders { padding:50px 20px; background:#f5f5f5; display:none; }
+.orders h2 { text-align:center; font-size:36px; margin-bottom:35px; color:#ff6b3c; }
+.order-card { background:white; border-radius:10px; padding:20px; margin-bottom:20px; box-shadow:0 3px 10px rgba(0,0,0,0.1); }
+.order-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; padding-bottom:10px; border-bottom:1px solid #eee; }
+.order-id { font-weight:bold; color:#333; }
+.order-date { color:#666; }
+.order-status { padding:5px 15px; border-radius:15px; font-size:12px; font-weight:bold; }
+.status-pending { background:#fff3cd; color:#856404; }
+.status-delivered { background:#d1edff; color:#004085; }
+.status-shipped { background:#d4edda; color:#155724; }
+.order-items { margin:15px 0; }
+.order-item { display:flex; align-items:center; padding:10px 0; border-bottom:1px solid #f0f0f0; }
+.order-item:last-child { border-bottom:none; }
+.order-item img { width:60px; height:60px; object-fit:cover; border-radius:8px; margin-right:15px; }
+.order-item-info { flex:1; }
+.order-total { text-align:right; font-size:18px; font-weight:bold; margin-top:15px; padding-top:15px; border-top:2px solid #eee; }
 
-// Load products
-const loadProducts = () => {
-    products = [
-        {
-            id: 1,
-            name: "Chef Knife", 
-            price: 420, 
-            img: "chefknife.png",
-            category: "cutlery",
-            description: "Professional-grade chef knife perfect for precision cutting, slicing, and dicing.",
-            specifications: {
-                "Material": "High-Carbon Stainless Steel",
-                "Blade Length": "8 inches",
-                "Handle": "Ergonomic Pakkawood",
-                "Weight": "250g",
-                "Care": "Hand wash only"
-            }
-        },
-        {
-            id: 2,
-            name: "Non-stick Pan", 
-            price: 3500, 
-            img: "nonstick.png",
-            category: "cookware",
-            description: "Premium non-stick frying pan with even heat distribution.",
-            specifications: {
-                "Material": "Aluminum with Ceramic Coating",
-                "Diameter": "28 cm",
-                "Heat Resistance": "Up to 260°C",
-                "Dishwasher Safe": "Yes",
-                "Warranty": "2 years"
-            }
-        },
-        {
-            id: 3,
-            name: "Measuring Cups", 
-            price: 250, 
-            img: "mug.png",
-            category: "tools",
-            description: "Accurate measuring cups set for perfect recipe execution.",
-            specifications: {
-                "Set Includes": "1/4, 1/3, 1/2, 1 cup sizes",
-                "Material": "BPA-free Plastic",
-                "Measurement": "Metric and Imperial",
-                "Dishwasher Safe": "Yes",
-                "Color": "Assorted"
-            }
-        },
-        {
-            id: 4,
-            name: "Mixing Bowls", 
-            price: 220, 
-            img: "bowl.png",
-            category: "bakeware",
-            description: "Versatile mixing bowls set with non-slip bases.",
-            specifications: {
-                "Set Includes": "3 bowls (1L, 2L, 3L)",
-                "Material": "Stainless Steel",
-                "Base": "Non-slip rubber",
-                "Nesting": "Yes, stackable",
-                "Dishwasher Safe": "Yes"
-            }
-        },
-        {
-            id: 5,
-            name: "Wooden Spoon", 
-            price: 450, 
-            img: "woodenspoon.png",
-            category: "tools",
-            description: "Handcrafted wooden spoon that's gentle on cookware.",
-            specifications: {
-                "Material": "Solid Beechwood",
-                "Length": "30 cm",
-                "Finish": "Food-safe oil",
-                "Care": "Hand wash, air dry",
-                "Features": "Non-scratch surface"
-            }
-        },
-        {
-            id: 6,
-            name: "Chopping Board", 
-            price: 600, 
-            img: "choppingboard.png",
-            category: "tools",
-            description: "Durable bamboo chopping board with juice groove.",
-            specifications: {
-                "Material": "100% Bamboo",
-                "Size": "35 x 25 cm",
-                "Thickness": "2 cm",
-                "Features": "Juice groove, non-slip feet",
-                "Care": "Hand wash, oil periodically"
-            }
-        }
-    ];
-};
+/* Mobile Responsive */
+@media (max-width: 768px) {
+    .menu-btn { display:flex; }
+    nav { display:none; }
+    nav.active { display:flex; flex-direction:column; position:absolute; top:100%; left:0; width:100%; background:#ff6b3c; padding:20px; }
+    nav.active a { margin:10px 0; }
+    .categories { display:none; }
+    .categories.active { display:block; }
+    .product-detail { flex-direction:column; }
+    .order-header { flex-direction:column; align-items:flex-start; gap:10px; }
+}
+</style>
+</head>
+<body>
 
-// Authentication middleware
-const authenticate = (req, res, next) => {
-    const token = req.header('Authorization')?.replace('Bearer ', '');
-    
-    if (!token) {
-        return res.status(401).json({ error: 'Access denied. No token provided.' });
-    }
+<header>
+    <h1>Utensil Utopia</h1>
+    <div class="menu-btn" id="menuBtn">
+        <span></span>
+        <span></span>
+        <span></span>
+    </div>
+    <nav id="nav-links">
+        <a href="#products">Products</a>
+        <a href="#orders" onclick="showOrders()">My Orders</a>
+        <a href="cart.html">Cart <span class="cart-count" id="cart-count">0</span></a>
+        <span id="user-links"></span>
+    </nav>
+</header>
 
-    try {
-        const verified = jwt.verify(token, 'your_secret_key');
-        req.user = verified;
-        next();
-    } catch (error) {
-        res.status(400).json({ error: 'Invalid token.' });
-    }
-};
+<!-- Categories Section -->
+<section class="categories" id="categories">
+    <button class="category-btn active" onclick="filterProducts('all')">All Products</button>
+    <button class="category-btn" onclick="filterProducts('cutlery')">Cutlery</button>
+    <button class="category-btn" onclick="filterProducts('cookware')">Cookware</button>
+    <button class="category-btn" onclick="filterProducts('bakeware')">Bakeware</button>
+    <button class="category-btn" onclick="filterProducts('tools')">Kitchen Tools</button>
+    <button class="category-btn" onclick="filterProducts('electrics')">Electrics</button>
+</section>
 
-// API Routes
+<section class="hero">
+    <h2>Your Perfect Kitchen Awaits</h2>
+    <p>Discover premium cooking utensils that transform your kitchen into a culinary paradise. Quality tools for exceptional cooking experiences!</p>
+    <a href="#products" class="btn">Explore Collection</a>
+</section>
 
-// Get all products
-app.get("/api/products", (req, res) => {
-    res.json(products);
+<section class="products" id="products">
+    <h2 id="categoryTitle">All Products</h2>
+    <div class="product-grid" id="product-grid">
+        <!-- Products will be loaded here dynamically -->
+    </div>
+</section>
+
+<!-- My Orders Section -->
+<section class="orders" id="orders">
+    <h2>My Orders</h2>
+    <div id="orders-container">
+        <!-- Orders will be loaded here dynamically -->
+    </div>
+</section>
+
+<!-- Product Detail Modal -->
+<div id="productModal" class="product-modal">
+    <div class="modal-content">
+        <span class="close-modal">&times;</span>
+        <div id="modalContent">
+            <!-- Product details will be loaded here -->
+        </div>
+    </div>
+</div>
+
+<footer>
+    &copy; 2025 Utensil Utopia. All rights reserved. | <a href="#">Privacy Policy</a>
+</footer>
+
+<script>
+const userLinks = document.getElementById("user-links");
+const menuBtn = document.getElementById("menuBtn");
+const navLinks = document.getElementById("nav-links");
+const categories = document.getElementById("categories");
+const ordersSection = document.getElementById("orders");
+const productsSection = document.getElementById("products");
+
+// Mobile menu toggle
+menuBtn.addEventListener('click', function() {
+    navLinks.classList.toggle('active');
+    categories.classList.toggle('active');
 });
 
-// User registration
-app.post("/api/register", async (req, res) => {
-    try {
-        const { name, email, password, phone } = req.body;
+// Check logged-in user
+const user = JSON.parse(localStorage.getItem("loggedInUser"));
+if(user){
+    const welcome = document.createElement('span');
+    welcome.textContent = `Welcome, ${user.name}`;
+    welcome.style.marginLeft = "15px";
+    userLinks.appendChild(welcome);
 
-        const existingUser = users.find(user => user.email === email);
-        if (existingUser) {
-            return res.status(400).json({ error: "User already exists" });
+    const logoutBtn = document.createElement('button');
+    logoutBtn.textContent = "Logout";
+    logoutBtn.style.marginLeft = "10px";
+    logoutBtn.style.padding = "5px 10px";
+    logoutBtn.style.border = "none";
+    logoutBtn.style.borderRadius = "5px";
+    logoutBtn.style.cursor = "pointer";
+    logoutBtn.onclick = () => { localStorage.removeItem("loggedInUser"); location.reload(); };
+    userLinks.appendChild(logoutBtn);
+}else{
+    const login = document.createElement('a');
+    login.href = "login.html";
+    login.textContent = "Login";
+    login.style.marginLeft = "15px";
+    userLinks.appendChild(login);
+    const signup = document.createElement('a');
+    signup.href = "signup.html";
+    signup.textContent = "Signup";
+    signup.style.marginLeft = "10px";
+    userLinks.appendChild(signup);
+}
+
+// Enhanced Products with categories
+let products = [
+    {
+        name: "Chef Knife", 
+        price: 420, 
+        img: "chefknife.png",
+        category: "cutlery",
+        description: "Professional-grade chef knife perfect for precision cutting, slicing, and dicing. Made from high-carbon stainless steel for exceptional sharpness and durability.",
+        specifications: {
+            "Material": "High-Carbon Stainless Steel",
+            "Blade Length": "8 inches",
+            "Handle": "Ergonomic Pakkawood",
+            "Weight": "250g",
+            "Care": "Hand wash only"
         }
-
-        const hashedPassword = await bcrypt.hash(password, 10);
-
-        const user = {
-            id: users.length + 1,
-            name,
-            email,
-            password: hashedPassword,
-            phone,
-            createdAt: new Date()
-        };
-
-        users.push(user);
-
-        const token = jwt.sign(
-            { id: user.id, name: user.name, email: user.email },
-            'your_secret_key',
-            { expiresIn: '24h' }
-        );
-
-        res.status(201).json({
-            message: "User created successfully",
-            token,
-            user: { id: user.id, name: user.name, email: user.email, phone: user.phone }
-        });
-
-    } catch (error) {
-        res.status(500).json({ error: "Server error" });
-    }
-});
-
-// User login
-app.post("/api/login", async (req, res) => {
-    try {
-        const { email, password } = req.body;
-
-        const user = users.find(user => user.email === email);
-        if (!user) {
-            return res.status(400).json({ error: "User not found" });
+    },
+    {
+        name: "Non-stick Pan", 
+        price: 3500, 
+        img: "nonstick.png",
+        category: "cookware",
+        description: "Premium non-stick frying pan with even heat distribution. Perfect for healthy cooking with minimal oil usage.",
+        specifications: {
+            "Material": "Aluminum with Ceramic Coating",
+            "Diameter": "28 cm",
+            "Heat Resistance": "Up to 260°C",
+            "Dishwasher Safe": "Yes",
+            "Warranty": "2 years"
         }
-
-        const validPassword = await bcrypt.compare(password, user.password);
-        if (!validPassword) {
-            return res.status(400).json({ error: "Invalid password" });
+    },
+    {
+        name: "Measuring Cups", 
+        price: 250, 
+        img: "mug.png",
+        category: "tools",
+        description: "Accurate measuring cups set for perfect recipe execution. Stackable design for easy storage.",
+        specifications: {
+            "Set Includes": "1/4, 1/3, 1/2, 1 cup sizes",
+            "Material": "BPA-free Plastic",
+            "Measurement": "Metric and Imperial",
+            "Dishwasher Safe": "Yes",
+            "Color": "Assorted"
         }
-
-        const token = jwt.sign(
-            { id: user.id, name: user.name, email: user.email },
-            'your_secret_key',
-            { expiresIn: '24h' }
-        );
-
-        res.json({
-            message: "Login successful",
-            token,
-            user: { id: user.id, name: user.name, email: user.email, phone: user.phone }
-        });
-
-    } catch (error) {
-        res.status(500).json({ error: "Server error" });
-    }
-});
-
-// Create order
-app.post("/api/orders", authenticate, (req, res) => {
-    try {
-        const { items, total, shippingAddress, paymentMethod, phone } = req.body;
-
-        const order = {
-            id: `ORD${Date.now()}`,
-            userId: req.user.id,
-            items,
-            total,
-            shippingAddress,
-            paymentMethod,
-            phone,
-            status: "pending",
-            createdAt: new Date()
-        };
-
-        orders.push(order);
-
-        res.status(201).json({
-            message: "Order created successfully",
-            order
-        });
-
-    } catch (error) {
-        res.status(500).json({ error: "Server error" });
-    }
-});
-
-// Get user orders
-app.get("/api/orders", authenticate, (req, res) => {
-    try {
-        const userOrders = orders.filter(order => order.userId === req.user.id);
-        res.json(userOrders);
-    } catch (error) {
-        res.status(500).json({ error: "Server error" });
-    }
-});
-
-// Serve HTML files
-app.get("*", (req, res) => {
-    const filePath = path.join(__dirname, req.url === "/" ? "index.html" : req.url);
-    
-    fs.readFile(filePath, (err, content) => {
-        if (err) {
-            if (err.code === 'ENOENT') {
-                fs.readFile(path.join(__dirname, "index.html"), (err, content) => {
-                    if (err) {
-                        res.status(404).send("<h1>404 Not Found</h1><a href='/'>Back to Home</a>");
-                    } else {
-                        res.type('html').send(content);
-                    }
-                });
-            } else {
-                res.status(500).send("<h1>500 Server Error</h1>");
-            }
-        } else {
-            const extname = path.extname(filePath);
-            let contentType = 'text/html';
-            
-            switch (extname) {
-                case '.js':
-                    contentType = 'text/javascript';
-                    break;
-                case '.css':
-                    contentType = 'text/css';
-                    break;
-                case '.png':
-                    contentType = 'image/png';
-                    break;
-                case '.jpg':
-                    contentType = 'image/jpg';
-                    break;
-            }
-            
-            res.type(contentType).send(content);
+    },
+    {
+        name: "Mixing Bowls", 
+        price: 220, 
+        img: "bowl.png",
+        category: "bakeware",
+        description: "Versatile mixing bowls set with non-slip bases. Ideal for mixing, marinating, and serving.",
+        specifications: {
+            "Set Includes": "3 bowls (1L, 2L, 3L)",
+            "Material": "Stainless Steel",
+            "Base": "Non-slip rubber",
+            "Nesting": "Yes, stackable",
+            "Dishwasher Safe": "Yes"
         }
+    },
+    {
+        name: "Wooden Spoon", 
+        price: 450, 
+        img: "woodenspoon.png",
+        category: "tools",
+        description: "Handcrafted wooden spoon that's gentle on cookware. Perfect for stirring, mixing, and serving.",
+        specifications: {
+            "Material": "Solid Beechwood",
+            "Length": "30 cm",
+            "Finish": "Food-safe oil",
+            "Care": "Hand wash, air dry",
+            "Features": "Non-scratch surface"
+        }
+    },
+    {
+        name: "Chopping Board", 
+        price: 600, 
+        img: "choppingboard.png",
+        category: "tools",
+        description: "Durable bamboo chopping board with juice groove. Natural antibacterial properties.",
+        specifications: {
+            "Material": "100% Bamboo",
+            "Size": "35 x 25 cm",
+            "Thickness": "2 cm",
+            "Features": "Juice groove, non-slip feet",
+            "Care": "Hand wash, oil periodically"
+        }
+    },
+    {
+        name: "Microplane Grater", 
+        price: 350, 
+        img: "microplanegraters.jpg",
+        category: "tools",
+        description: "Ultra-sharp grater for zesting, grating cheese, and spices with precision.",
+        specifications: {
+            "Material": "Stainless Steel",
+            "Length": "25 cm",
+            "Grating Surface": "Laser-cut sharp edges",
+            "Handle": "Comfort-grip",
+            "Dishwasher Safe": "Yes"
+        }
+    },
+    {
+        name: "Electric Kettle", 
+        price: 950, 
+        img: "electrickettele.png",
+        category: "electrics",
+        description: "Fast-boiling electric kettle with automatic shut-off and boil-dry protection.",
+        specifications: {
+            "Capacity": "1.7 Liters",
+            "Power": "1500W",
+            "Material": "Stainless Steel",
+            "Features": "Auto shut-off, boil-dry protection",
+            "Cordless": "Yes"
+        }
+    },
+    {
+        name: "Rice Cooker", 
+        price: 3200, 
+        img: "ricecooker.png",
+        category: "electrics",
+        description: "Automatic rice cooker with keep-warm function. Perfect for fluffy rice every time.",
+        specifications: {
+            "Capacity": "1.8 Liters",
+            "Power": "400W",
+            "Functions": "Cook, Keep Warm",
+            "Inner Pot": "Non-stick coating",
+            "Measurements": "Cup markings included"
+        }
+    },
+    {
+        name: "Pressure Cooker", 
+        price: 3000, 
+        img: "pressurecooker.png",
+        category: "cookware",
+        description: "Safe and efficient pressure cooker for fast, energy-saving cooking.",
+        specifications: {
+            "Capacity": "5 Liters",
+            "Material": "Stainless Steel",
+            "Safety Features": "Multiple safety valves",
+            "Pressure Settings": "2 levels",
+            "Compatibility": "All stovetops"
+        }
+    },
+    {
+        name: "Patila Cooker Container Hot Pot Stand", 
+        price: 90, 
+        img: "patilacookercontainerhotpotstand.png",
+        category: "tools",
+        description: "Essential stand for safe and stable cooking with various pots and containers.",
+        specifications: {
+            "Material": "Stainless Steel",
+            "Diameter": "15 cm",
+            "Height": "5 cm",
+            "Features": "Heat resistant, stable base",
+            "Compatibility": "Universal fit"
+        }
+    },
+    {
+        name: "Silicon Rubber Spatula", 
+        price: 220, 
+        img: "siliconrubberspatula.png",
+        category: "tools",
+        description: "Heat-resistant silicone spatula that's gentle on all cookware surfaces.",
+        specifications: {
+            "Material": "Food-grade Silicone",
+            "Heat Resistance": "Up to 230°C",
+            "Handle": "Stainless Steel",
+            "Features": "Non-scratch, flexible head",
+            "Dishwasher Safe": "Yes"
+        }
+    }
+];
+
+const grid = document.getElementById("product-grid");
+const productModal = document.getElementById("productModal");
+const modalContent = document.getElementById("modalContent");
+const categoryTitle = document.getElementById("categoryTitle");
+const ordersContainer = document.getElementById("orders-container");
+
+let currentCategory = 'all';
+
+function displayProducts(filteredProducts = products) {
+    grid.innerHTML = "";
+    filteredProducts.forEach(prod => {
+        const card = document.createElement("div");
+        card.className = "product-card";
+        card.innerHTML = `
+            <img src="${prod.img}" alt="${prod.name}" onclick="showProductDetail('${prod.name}')">
+            <div class="card-body">
+                <h3 onclick="showProductDetail('${prod.name}')" style="cursor:pointer;">${prod.name}</h3>
+                <p>৳${prod.price.toLocaleString('en-BD')} <span class="currency">BDT</span></p>
+                <button onclick="showProductDetail('${prod.name}')">View Details</button>
+                <button onclick="addToCart('${prod.name}',${prod.price},'${prod.img}')">Add to Cart</button>
+            </div>
+        `;
+        grid.appendChild(card);
     });
-});
+}
+
+function filterProducts(category) {
+    currentCategory = category;
+    
+    // Update active button
+    document.querySelectorAll('.category-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    event.target.classList.add('active');
+    
+    // Filter products
+    let filteredProducts = products;
+    if (category !== 'all') {
+        filteredProducts = products.filter(prod => prod.category === category);
+    }
+    
+    // Update category title
+    const categoryNames = {
+        'all': 'All Products',
+        'cutlery': 'Cutlery & Knives',
+        'cookware': 'Cookware',
+        'bakeware': 'Bakeware',
+        'tools': 'Kitchen Tools',
+        'electrics': 'Electric Appliances'
+    };
+    categoryTitle.textContent = categoryNames[category];
+    
+    displayProducts(filteredProducts);
+}
+
+function showProductDetail(productName) {
+    const product = products.find(p => p.name === productName);
+    if (product) {
+        let specsHTML = '';
+        for (const [key, value] of Object.entries(product.specifications)) {
+            specsHTML += `<li><strong>${key}:</strong> ${value}</li>`;
+        }
+
+        modalContent.innerHTML = `
+            <div class="product-detail">
+                <div class="product-image">
+                    <img src="${product.img}" alt="${product.name}">
+                </div>
+                <div class="product-info">
+                    <h2>${product.name}</h2>
+                    <div class="product-price">৳${product.price.toLocaleString('en-BD')} BDT</div>
+                    <div class="description">
+                        ${product.description}
+                    </div>
+                    <div class="specifications">
+                        <h3>Specifications</h3>
+                        <ul class="spec-list">
+                            ${specsHTML}
+                        </ul>
+                    </div>
+                    <button class="btn" onclick="addToCart('${product.name}',${product.price},'${product.img}'); productModal.style.display='none';">Add to Cart</button>
+                </div>
+            </div>
+        `;
+        productModal.style.display = 'block';
+    }
+}
+
+function showOrders() {
+    if (!user) {
+        alert('Please login to view your orders');
+        return;
+    }
+    
+    productsSection.style.display = 'none';
+    ordersSection.style.display = 'block';
+    loadOrders();
+}
+
+function loadOrders() {
+    const orders = JSON.parse(localStorage.getItem('userOrders')) || [];
+    ordersContainer.innerHTML = '';
+    
+    if (orders.length === 0) {
+        ordersContainer.innerHTML = '<p style="text-align:center; color:#666; font-size:18px;">No orders found</p>';
+        return;
+    }
+    
+    orders.forEach(order => {
+        const orderCard = document.createElement('div');
+        orderCard.className = 'order-card';
+        
+        let itemsHTML = '';
+        let total = 0;
+        
+        order.items.forEach(item => {
+            total += item.price * item.quantity;
+            itemsHTML += `
+                <div class="order-item">
+                    <img src="${item.image}" alt="${item.name}">
+                    <div class="order-item-info">
+                        <strong>${item.name}</strong>
+                        <div>৳${item.price.toLocaleString('en-BD')} x ${item.quantity}</div>
+                    </div>
+                </div>
+            `;
+        });
+        
+        orderCard.innerHTML = `
+            <div class="order-header">
+                <div>
+                    <div class="order-id">Order #${order.id}</div>
+                    <div class="order-date">${new Date(order.date).toLocaleDateString()}</div>
+                </div>
+                <div class="order-status status-${order.status}">${order.status.charAt(0).toUpperCase() + order.status.slice(1)}</div>
+            </div>
+            <div class="order-items">
+                ${itemsHTML}
+            </div>
+            <div class="order-total">
+                Total: ৳${total.toLocaleString('en-BD')} BDT
+            </div>
+        `;
+        
+        ordersContainer.appendChild(orderCard);
+    });
+}
+
+// Close modal when clicking X
+document.querySelector('.close-modal').onclick = function() {
+    productModal.style.display = 'none';
+}
+
+// Close modal when clicking outside
+window.onclick = function(event) {
+    if (event.target == productModal) {
+        productModal.style.display = 'none';
+    }
+}
+
+function addToCart(name, price, img){
+    let cart = JSON.parse(localStorage.getItem("cart")) || [];
+    cart.push({name, price, img, qty:1});
+    localStorage.setItem("cart", JSON.stringify(cart));
+    updateCartCount();
+    alert(name + " added to cart!");
+}
+
+function updateCartCount(){
+    const cart = JSON.parse(localStorage.getItem("cart")) || [];
+    document.getElementById("cart-count").textContent = cart.length;
+}
 
 // Initialize
-loadProducts();
+displayProducts();
+updateCartCount();
 
-// Sample data
-users.push({
-    id: 1,
-    name: "Demo User",
-    email: "demo@example.com",
-    password: "$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi", // password
-    phone: "01712345678",
-    createdAt: new Date()
-});
+// Create sample orders for demo (remove in production)
+if (!localStorage.getItem('userOrders')) {
+    const sampleOrders = [
+        {
+            id: 'ORD001',
+            date: new Date().toISOString(),
+            status: 'delivered',
+            items: [
+                { name: 'Chef Knife', price: 420, quantity: 1, image: 'chefknife.png' },
+                { name: 'Wooden Spoon', price: 450, quantity: 2, image: 'woodenspoon.png' }
+            ]
+        },
+        {
+            id: 'ORD002',
+            date: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
+            status: 'shipped',
+            items: [
+                { name: 'Non-stick Pan', price: 3500, quantity: 1, image: 'nonstick.png' }
+            ]
+        }
+    ];
+    localStorage.setItem('userOrders', JSON.stringify(sampleOrders));
+}
+</script>
 
-orders.push(
-    {
-        id: "ORD001",
-        userId: 1,
-        items: [
-            { name: "Chef Knife", price: 420, quantity: 1, image: "chefknife.png" },
-            { name: "Wooden Spoon", price: 450, quantity: 2, image: "woodenspoon.png" }
-        ],
-        total: 1320,
-        shippingAddress: "123 Main St, Dhaka",
-        paymentMethod: "Cash on Delivery",
-        phone: "01712345678",
-        status: "delivered",
-        createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
-    }
-);
-
-app.listen(PORT, () => {
-    console.log(`🚀 Server running at http://localhost:${PORT}`);
-    console.log(`📡 API endpoints available at http://localhost:${PORT}/api/`);
-    console.log(`👤 Demo user: demo@example.com / password`);
-});
+</body>
+</html>
