@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Utensil Utopia - Premium Cooking Tools</title>
+<title>Cooking Essentials</title>
 <style>
 * { margin:0; padding:0; box-sizing:border-box; font-family:'Segoe UI',sans-serif; }
 body { background:#f9f9f9; color:#333; }
@@ -36,7 +36,7 @@ footer a { color:#ff6b3c; text-decoration:none; }
 <body>
 
 <header>
-    <h1>Utensil Utopia</h1>
+    <h1>Cooking Essentials</h1>
     <nav id="nav-links">
         <a href="#products">Products</a>
         <a href="cart.html">Cart <span class="cart-count" id="cart-count">0</span></a>
@@ -45,20 +45,20 @@ footer a { color:#ff6b3c; text-decoration:none; }
 </header>
 
 <section class="hero">
-    <h2>Your Perfect Kitchen Awaits</h2>
-    <p>Discover premium cooking utensils that transform your kitchen into a culinary paradise. Quality tools for exceptional cooking experiences!</p>
-    <a href="#products" class="btn">Explore Collection</a>
+    <h2>Cook Like a Pro</h2>
+    <p>Discover premium cooking essentials for every kitchen. Stylish, durable tools that make cooking a joy!</p>
+    <a href="#products" class="btn">Shop Now</a>
 </section>
 
 <section class="products" id="products">
-    <h2>Featured Utensils</h2>
+    <h2>Our Top Products</h2>
     <div class="product-grid" id="product-grid">
         <!-- Products will be loaded here dynamically -->
     </div>
 </section>
 
 <footer>
-    &copy; 2025 Utensil Utopia. All rights reserved. | <a href="#">Privacy Policy</a>
+    &copy; 2025 Cooking Essentials. All rights reserved. | <a href="#">Privacy Policy</a>
 </footer>
 
 <script>
@@ -96,12 +96,19 @@ if(user){
 
 // Products with BDT prices
 let products = [
-    {name:"Chef Knife", price:420, img:"chelfurife"},
-    {name:"Non-stick Pan", price:3500, img:"nonstick"},
-    {name:"Measuring Cups", price:250, img:"mug"},
-    {name:"Mixing Bowls", price:220, img:"bowl"},
-    {name:"Wooden Spoon", price:450, img:"woodenspoon"},
-    {name:"Chopping Board", price:600, img:"choppingboard"}
+    {name:"Chef Knife", price:420, img:"chefknife.png"},
+    {name:"Non-stick Pan", price:3500, img:"nonstick.png"},
+    {name:"Measuring Cups", price:250, img:"mug.png"},
+    {name:"Mixing Bowls", price:220, img:"bowl.png"},
+    {name:"Wooden Spoon", price:450, img:"woodenspoon.png"},
+    {name:"Chopping Board", price:600, img:"choppingboard.png"},
+    {name:"Microplane Grater", price:350, img:"microplanegraters.jpg"},
+    {name:"Electric Kettle", price:950, img:"electrickettele.png"},
+    {name:"Rice Cooker ", price:3200, img:"ricecooker.png"},
+    {name:"Pressure Cooker ", price:3000, img:"pressurecooker.png"},
+    {name:"Patila Cooker Container Hot Pot Stand ", price:90, img:"patilacookercontainerhotpotstand.png"},
+    {name:"Silicon Rubber Spatula ", price:220, img:"siliconrubberspatula.png"}
+
 ];
 
 const grid = document.getElementById("product-grid");
