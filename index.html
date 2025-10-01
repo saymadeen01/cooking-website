@@ -57,6 +57,24 @@ footer a { color:#ff6b3c; text-decoration:none; }
 .category-btn:hover, .category-btn.active { background:#ff6b3c; }
 .category-title { text-align:center; margin-bottom:20px; color:#ff6b3c; font-size:28px; }
 
+/* Orders Section */
+.orders { padding:50px 20px; background:#f5f5f5; display:none; }
+.orders h2 { text-align:center; font-size:36px; margin-bottom:35px; color:#ff6b3c; }
+.order-card { background:white; border-radius:10px; padding:20px; margin-bottom:20px; box-shadow:0 3px 10px rgba(0,0,0,0.1); }
+.order-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; padding-bottom:10px; border-bottom:1px solid #eee; }
+.order-id { font-weight:bold; color:#333; }
+.order-date { color:#666; }
+.order-status { padding:5px 15px; border-radius:15px; font-size:12px; font-weight:bold; }
+.status-pending { background:#fff3cd; color:#856404; }
+.status-delivered { background:#d1edff; color:#004085; }
+.status-shipped { background:#d4edda; color:#155724; }
+.order-items { margin:15px 0; }
+.order-item { display:flex; align-items:center; padding:10px 0; border-bottom:1px solid #f0f0f0; }
+.order-item:last-child { border-bottom:none; }
+.order-item img { width:60px; height:60px; object-fit:cover; border-radius:8px; margin-right:15px; }
+.order-item-info { flex:1; }
+.order-total { text-align:right; font-size:18px; font-weight:bold; margin-top:15px; padding-top:15px; border-top:2px solid #eee; }
+
 /* Mobile Responsive */
 @media (max-width: 768px) {
     .menu-btn { display:flex; }
@@ -66,6 +84,7 @@ footer a { color:#ff6b3c; text-decoration:none; }
     .categories { display:none; }
     .categories.active { display:block; }
     .product-detail { flex-direction:column; }
+    .order-header { flex-direction:column; align-items:flex-start; gap:10px; }
 }
 </style>
 </head>
@@ -80,6 +99,7 @@ footer a { color:#ff6b3c; text-decoration:none; }
     </div>
     <nav id="nav-links">
         <a href="#products">Products</a>
+        <a href="#orders" onclick="showOrders()">My Orders</a>
         <a href="cart.html">Cart <span class="cart-count" id="cart-count">0</span></a>
         <span id="user-links"></span>
     </nav>
@@ -108,6 +128,14 @@ footer a { color:#ff6b3c; text-decoration:none; }
     </div>
 </section>
 
+<!-- My Orders Section -->
+<section class="orders" id="orders">
+    <h2>My Orders</h2>
+    <div id="orders-container">
+        <!-- Orders will be loaded here dynamically -->
+    </div>
+</section>
+
 <!-- Product Detail Modal -->
 <div id="productModal" class="product-modal">
     <div class="modal-content">
@@ -127,6 +155,8 @@ const userLinks = document.getElementById("user-links");
 const menuBtn = document.getElementById("menuBtn");
 const navLinks = document.getElementById("nav-links");
 const categories = document.getElementById("categories");
+const ordersSection = document.getElementById("orders");
+const productsSection = document.getElementById("products");
 
 // Mobile menu toggle
 menuBtn.addEventListener('click', function() {
@@ -340,6 +370,7 @@ const grid = document.getElementById("product-grid");
 const productModal = document.getElementById("productModal");
 const modalContent = document.getElementById("modalContent");
 const categoryTitle = document.getElementById("categoryTitle");
+const ordersContainer = document.getElementById("orders-container");
 
 let currentCategory = 'all';
 
@@ -423,6 +454,66 @@ function showProductDetail(productName) {
     }
 }
 
+function showOrders() {
+    if (!user) {
+        alert('Please login to view your orders');
+        return;
+    }
+    
+    productsSection.style.display = 'none';
+    ordersSection.style.display = 'block';
+    loadOrders();
+}
+
+function loadOrders() {
+    const orders = JSON.parse(localStorage.getItem('userOrders')) || [];
+    ordersContainer.innerHTML = '';
+    
+    if (orders.length === 0) {
+        ordersContainer.innerHTML = '<p style="text-align:center; color:#666; font-size:18px;">No orders found</p>';
+        return;
+    }
+    
+    orders.forEach(order => {
+        const orderCard = document.createElement('div');
+        orderCard.className = 'order-card';
+        
+        let itemsHTML = '';
+        let total = 0;
+        
+        order.items.forEach(item => {
+            total += item.price * item.quantity;
+            itemsHTML += `
+                <div class="order-item">
+                    <img src="${item.image}" alt="${item.name}">
+                    <div class="order-item-info">
+                        <strong>${item.name}</strong>
+                        <div>৳${item.price.toLocaleString('en-BD')} x ${item.quantity}</div>
+                    </div>
+                </div>
+            `;
+        });
+        
+        orderCard.innerHTML = `
+            <div class="order-header">
+                <div>
+                    <div class="order-id">Order #${order.id}</div>
+                    <div class="order-date">${new Date(order.date).toLocaleDateString()}</div>
+                </div>
+                <div class="order-status status-${order.status}">${order.status.charAt(0).toUpperCase() + order.status.slice(1)}</div>
+            </div>
+            <div class="order-items">
+                ${itemsHTML}
+            </div>
+            <div class="order-total">
+                Total: ৳${total.toLocaleString('en-BD')} BDT
+            </div>
+        `;
+        
+        ordersContainer.appendChild(orderCard);
+    });
+}
+
 // Close modal when clicking X
 document.querySelector('.close-modal').onclick = function() {
     productModal.style.display = 'none';
@@ -451,6 +542,30 @@ function updateCartCount(){
 // Initialize
 displayProducts();
 updateCartCount();
+
+// Create sample orders for demo (remove in production)
+if (!localStorage.getItem('userOrders')) {
+    const sampleOrders = [
+        {
+            id: 'ORD001',
+            date: new Date().toISOString(),
+            status: 'delivered',
+            items: [
+                { name: 'Chef Knife', price: 420, quantity: 1, image: 'chefknife.png' },
+                { name: 'Wooden Spoon', price: 450, quantity: 2, image: 'woodenspoon.png' }
+            ]
+        },
+        {
+            id: 'ORD002',
+            date: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
+            status: 'shipped',
+            items: [
+                { name: 'Non-stick Pan', price: 3500, quantity: 1, image: 'nonstick.png' }
+            ]
+        }
+    ];
+    localStorage.setItem('userOrders', JSON.stringify(sampleOrders));
+}
 </script>
 
 </body>
