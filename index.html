@@ -48,18 +48,52 @@ footer a { color:#ff6b3c; text-decoration:none; }
 .spec-list li { padding:8px 0; border-bottom:1px solid #eee; }
 .spec-list li:last-child { border-bottom:none; }
 .description { line-height:1.6; margin:15px 0; }
+
+/* Category Menu Styles */
+.menu-btn { display:none; flex-direction:column; cursor:pointer; padding:5px; }
+.menu-btn span { width:25px; height:3px; background:white; margin:3px 0; transition:0.3s; }
+.categories { background:#333; padding:15px 0; text-align:center; }
+.category-btn { background:#555; color:white; border:none; padding:10px 20px; margin:0 10px; border-radius:25px; cursor:pointer; font-weight:bold; transition:0.3s; }
+.category-btn:hover, .category-btn.active { background:#ff6b3c; }
+.category-title { text-align:center; margin-bottom:20px; color:#ff6b3c; font-size:28px; }
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+    .menu-btn { display:flex; }
+    nav { display:none; }
+    nav.active { display:flex; flex-direction:column; position:absolute; top:100%; left:0; width:100%; background:#ff6b3c; padding:20px; }
+    nav.active a { margin:10px 0; }
+    .categories { display:none; }
+    .categories.active { display:block; }
+    .product-detail { flex-direction:column; }
+}
 </style>
 </head>
 <body>
 
 <header>
     <h1>Utensil Utopia</h1>
+    <div class="menu-btn" id="menuBtn">
+        <span></span>
+        <span></span>
+        <span></span>
+    </div>
     <nav id="nav-links">
         <a href="#products">Products</a>
         <a href="cart.html">Cart <span class="cart-count" id="cart-count">0</span></a>
         <span id="user-links"></span>
     </nav>
 </header>
+
+<!-- Categories Section -->
+<section class="categories" id="categories">
+    <button class="category-btn active" onclick="filterProducts('all')">All Products</button>
+    <button class="category-btn" onclick="filterProducts('cutlery')">Cutlery</button>
+    <button class="category-btn" onclick="filterProducts('cookware')">Cookware</button>
+    <button class="category-btn" onclick="filterProducts('bakeware')">Bakeware</button>
+    <button class="category-btn" onclick="filterProducts('tools')">Kitchen Tools</button>
+    <button class="category-btn" onclick="filterProducts('electrics')">Electrics</button>
+</section>
 
 <section class="hero">
     <h2>Your Perfect Kitchen Awaits</h2>
@@ -68,7 +102,7 @@ footer a { color:#ff6b3c; text-decoration:none; }
 </section>
 
 <section class="products" id="products">
-    <h2>Featured Utensils</h2>
+    <h2 id="categoryTitle">All Products</h2>
     <div class="product-grid" id="product-grid">
         <!-- Products will be loaded here dynamically -->
     </div>
@@ -90,6 +124,15 @@ footer a { color:#ff6b3c; text-decoration:none; }
 
 <script>
 const userLinks = document.getElementById("user-links");
+const menuBtn = document.getElementById("menuBtn");
+const navLinks = document.getElementById("nav-links");
+const categories = document.getElementById("categories");
+
+// Mobile menu toggle
+menuBtn.addEventListener('click', function() {
+    navLinks.classList.toggle('active');
+    categories.classList.toggle('active');
+});
 
 // Check logged-in user
 const user = JSON.parse(localStorage.getItem("loggedInUser"));
@@ -121,12 +164,13 @@ if(user){
     userLinks.appendChild(signup);
 }
 
-// Enhanced Products with descriptions and specifications
+// Enhanced Products with categories
 let products = [
     {
         name: "Chef Knife", 
         price: 420, 
         img: "chefknife.png",
+        category: "cutlery",
         description: "Professional-grade chef knife perfect for precision cutting, slicing, and dicing. Made from high-carbon stainless steel for exceptional sharpness and durability.",
         specifications: {
             "Material": "High-Carbon Stainless Steel",
@@ -140,6 +184,7 @@ let products = [
         name: "Non-stick Pan", 
         price: 3500, 
         img: "nonstick.png",
+        category: "cookware",
         description: "Premium non-stick frying pan with even heat distribution. Perfect for healthy cooking with minimal oil usage.",
         specifications: {
             "Material": "Aluminum with Ceramic Coating",
@@ -153,6 +198,7 @@ let products = [
         name: "Measuring Cups", 
         price: 250, 
         img: "mug.png",
+        category: "tools",
         description: "Accurate measuring cups set for perfect recipe execution. Stackable design for easy storage.",
         specifications: {
             "Set Includes": "1/4, 1/3, 1/2, 1 cup sizes",
@@ -166,6 +212,7 @@ let products = [
         name: "Mixing Bowls", 
         price: 220, 
         img: "bowl.png",
+        category: "bakeware",
         description: "Versatile mixing bowls set with non-slip bases. Ideal for mixing, marinating, and serving.",
         specifications: {
             "Set Includes": "3 bowls (1L, 2L, 3L)",
@@ -179,6 +226,7 @@ let products = [
         name: "Wooden Spoon", 
         price: 450, 
         img: "woodenspoon.png",
+        category: "tools",
         description: "Handcrafted wooden spoon that's gentle on cookware. Perfect for stirring, mixing, and serving.",
         specifications: {
             "Material": "Solid Beechwood",
@@ -192,6 +240,7 @@ let products = [
         name: "Chopping Board", 
         price: 600, 
         img: "choppingboard.png",
+        category: "tools",
         description: "Durable bamboo chopping board with juice groove. Natural antibacterial properties.",
         specifications: {
             "Material": "100% Bamboo",
@@ -205,6 +254,7 @@ let products = [
         name: "Microplane Grater", 
         price: 350, 
         img: "microplanegraters.jpg",
+        category: "tools",
         description: "Ultra-sharp grater for zesting, grating cheese, and spices with precision.",
         specifications: {
             "Material": "Stainless Steel",
@@ -218,6 +268,7 @@ let products = [
         name: "Electric Kettle", 
         price: 950, 
         img: "electrickettele.png",
+        category: "electrics",
         description: "Fast-boiling electric kettle with automatic shut-off and boil-dry protection.",
         specifications: {
             "Capacity": "1.7 Liters",
@@ -231,6 +282,7 @@ let products = [
         name: "Rice Cooker", 
         price: 3200, 
         img: "ricecooker.png",
+        category: "electrics",
         description: "Automatic rice cooker with keep-warm function. Perfect for fluffy rice every time.",
         specifications: {
             "Capacity": "1.8 Liters",
@@ -244,6 +296,7 @@ let products = [
         name: "Pressure Cooker", 
         price: 3000, 
         img: "pressurecooker.png",
+        category: "cookware",
         description: "Safe and efficient pressure cooker for fast, energy-saving cooking.",
         specifications: {
             "Capacity": "5 Liters",
@@ -257,6 +310,7 @@ let products = [
         name: "Patila Cooker Container Hot Pot Stand", 
         price: 90, 
         img: "patilacookercontainerhotpotstand.png",
+        category: "tools",
         description: "Essential stand for safe and stable cooking with various pots and containers.",
         specifications: {
             "Material": "Stainless Steel",
@@ -270,6 +324,7 @@ let products = [
         name: "Silicon Rubber Spatula", 
         price: 220, 
         img: "siliconrubberspatula.png",
+        category: "tools",
         description: "Heat-resistant silicone spatula that's gentle on all cookware surfaces.",
         specifications: {
             "Material": "Food-grade Silicone",
@@ -284,10 +339,13 @@ let products = [
 const grid = document.getElementById("product-grid");
 const productModal = document.getElementById("productModal");
 const modalContent = document.getElementById("modalContent");
+const categoryTitle = document.getElementById("categoryTitle");
 
-function displayProducts(){
+let currentCategory = 'all';
+
+function displayProducts(filteredProducts = products) {
     grid.innerHTML = "";
-    products.forEach(prod => {
+    filteredProducts.forEach(prod => {
         const card = document.createElement("div");
         card.className = "product-card";
         card.innerHTML = `
@@ -301,6 +359,35 @@ function displayProducts(){
         `;
         grid.appendChild(card);
     });
+}
+
+function filterProducts(category) {
+    currentCategory = category;
+    
+    // Update active button
+    document.querySelectorAll('.category-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    event.target.classList.add('active');
+    
+    // Filter products
+    let filteredProducts = products;
+    if (category !== 'all') {
+        filteredProducts = products.filter(prod => prod.category === category);
+    }
+    
+    // Update category title
+    const categoryNames = {
+        'all': 'All Products',
+        'cutlery': 'Cutlery & Knives',
+        'cookware': 'Cookware',
+        'bakeware': 'Bakeware',
+        'tools': 'Kitchen Tools',
+        'electrics': 'Electric Appliances'
+    };
+    categoryTitle.textContent = categoryNames[category];
+    
+    displayProducts(filteredProducts);
 }
 
 function showProductDetail(productName) {
@@ -361,6 +448,7 @@ function updateCartCount(){
     document.getElementById("cart-count").textContent = cart.length;
 }
 
+// Initialize
 displayProducts();
 updateCartCount();
 </script>
